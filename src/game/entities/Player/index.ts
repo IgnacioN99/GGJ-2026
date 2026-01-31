@@ -2,7 +2,7 @@ import { Scene } from 'phaser';
 import type { PlayerDirection } from './type';
 import { MOVE_SPEED } from './type';
 
-export class Player extends Phaser.GameObjects.Sprite {
+class Player extends Phaser.GameObjects.Sprite {
     private targetX: number;
     private targetY: number;
     private isMoving: boolean = false;
@@ -12,7 +12,7 @@ export class Player extends Phaser.GameObjects.Sprite {
         super(scene, x, y, 'player', 0);
         this.targetX = x;
         this.targetY = y;
-        this.setOrigin(0.5, 1); // anclar por los pies para que quede bien sobre el suelo
+        this.setOrigin(0.5, 0.5); // centro del sprite como punto de referencia
     }
 
     moveTo(worldX: number, worldY: number): void {
@@ -72,3 +72,4 @@ export class Player extends Phaser.GameObjects.Sprite {
 }
 
 export type { PlayerDirection } from './type';
+export default Player;
