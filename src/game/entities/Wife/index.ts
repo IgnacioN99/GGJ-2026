@@ -87,4 +87,11 @@ export class Wife extends Events.EventEmitter {
 }
 
 export type { WifeState, WifeSceneAction, WifeEmittedAction } from './type';
-export { DEFAULT_MAX_SOUND, WifeEventTypes, soundAdded, soundReduced } from './const';
+export {
+  DEFAULT_MAX_SOUND,
+  WifeEventTypes,
+  soundAdded,
+  soundReduced,
+  WIFE_LIFE_IMAGE_KEYS,
+  getWifeLifeImageIndex
+} from './const';
