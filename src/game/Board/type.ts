@@ -64,11 +64,11 @@ export const DEFAULT_BOARD_CONFIG: BoardConfig = {
     cols: 5,
     rows: 4,
     margin: 20,
-    marginTop: 560,
+    marginTop: 590,
     marginLeft: 60,
     marginRight: 370,
     marginBottom: 0,
     vanishingPointYOffset: 80,
     perspectiveShrink: 0.5,
-    perspectiveYCompression: 1.5
+    perspectiveYCompression: 1.15
 };
