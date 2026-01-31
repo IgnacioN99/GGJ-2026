@@ -112,7 +112,7 @@ const pointInQuad = (px: number, py: number, quad: { x: number; y: number }[]): 
     return inside;
 };
 
-/** Área del tablero en coordenadas mundo (mitad izquierda de la pantalla) */
+/** Área del tablero en coordenadas mundo (delimitada por la pared del fondo_main) */
 const getBoardBounds = (
     scene: Scene,
     config: BoardConfig = DEFAULT_BOARD_CONFIG
@@ -124,11 +124,10 @@ const getBoardBounds = (
     cellHeight: number } => {
     const w = scene.scale.width;
     const h = scene.scale.height;
-    const boardWidth = Math.floor(w * 0.65);
-    const minX = config.margin;
-    const maxX = boardWidth - config.margin;
+    const minX = config.marginLeft ?? config.margin;
+    const maxX = w - (config.marginRight ?? config.margin);
     const minY = config.marginTop ?? config.margin;
-    const maxY = h - config.margin;
+    const maxY = h - (config.marginBottom ?? config.margin);
     const cellWidth = (maxX - minX) / config.cols;
     const cellHeight = (maxY - minY) / config.rows;
     return { minX, maxX, minY, maxY, cellWidth, cellHeight };

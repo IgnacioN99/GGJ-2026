@@ -33,6 +33,7 @@ export class Preloader extends Scene
         this.load.setPath('assets');
 
         this.load.image('logo', 'logo.png');
+        this.load.image('fondo_main', 'fondo_main.png');
 
         // Player: cargamos como imagen para quitar el fondo (damero) y crear textura con transparencia
         this.load.image('player_raw', 'player/player-spritesheet.png');
