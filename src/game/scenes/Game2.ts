@@ -1,31 +1,26 @@
 import { Scene } from 'phaser';
 import entities from '../entities';
 import { Board, type Cell } from '../Board';
-import { getBoardConfigForLevel, type GameLevel } from '../Board/type';
+import { getBoardConfigForLevel } from '../Board/type';
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
 
-export class Game extends Scene
+export class Game2 extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
     player: InstanceType<typeof entities.player>;
     private board: Board;
-    private level: GameLevel = 1;
 
     constructor ()
     {
-        super('Game');
-    }
-
-    init (data: { level?: GameLevel }): void {
-        this.level = data?.level ?? 1;
+        super('Game2');
     }
 
     create ()
     {
-        const boardConfig = getBoardConfigForLevel(this.level);
+        const boardConfig = getBoardConfigForLevel(2);
 
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor(0x5a3a2a);
@@ -55,7 +50,7 @@ export class Game extends Scene
 
         // Expuesto para E2E (Playwright): leer posición del jugador y comprobar que está en celdas del tablero
         if (typeof window !== 'undefined') {
-            (window as unknown as { __gameScene?: Game }).__gameScene = this;
+            (window as unknown as { __gameScene?: Game2 }).__gameScene = this;
         }
 
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {

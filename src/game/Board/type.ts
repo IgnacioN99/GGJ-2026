@@ -64,11 +64,26 @@ export const DEFAULT_BOARD_CONFIG: BoardConfig = {
     cols: 5,
     rows: 4,
     margin: 20,
-    marginTop: 560,
+    marginTop: 590,
     marginLeft: 60,
     marginRight: 370,
     marginBottom: 0,
     vanishingPointYOffset: 80,
     perspectiveShrink: 0.5,
-    perspectiveYCompression: 1.5
+    perspectiveYCompression: 1.15
 };
+
+/** Nivel 2 usa el mismo tablero que el nivel 1 (solo para desarrollo) */
+export const LEVEL_2_BOARD_CONFIG: BoardConfig = DEFAULT_BOARD_CONFIG;
+
+export type GameLevel = 1 | 2;
+
+const BOARD_CONFIG_BY_LEVEL: Record<GameLevel, BoardConfig> = {
+    1: DEFAULT_BOARD_CONFIG,
+    2: LEVEL_2_BOARD_CONFIG
+};
+
+/** Devuelve la configuración del tablero para el nivel dado (1 o 2). */
+export function getBoardConfigForLevel(level: GameLevel): BoardConfig {
+    return BOARD_CONFIG_BY_LEVEL[level];
+}
