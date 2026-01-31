@@ -72,3 +72,18 @@ export const DEFAULT_BOARD_CONFIG: BoardConfig = {
     perspectiveShrink: 0.5,
     perspectiveYCompression: 1.15
 };
+
+/** Nivel 2 usa el mismo tablero que el nivel 1 (solo para desarrollo) */
+export const LEVEL_2_BOARD_CONFIG: BoardConfig = DEFAULT_BOARD_CONFIG;
+
+export type GameLevel = 1 | 2;
+
+const BOARD_CONFIG_BY_LEVEL: Record<GameLevel, BoardConfig> = {
+    1: DEFAULT_BOARD_CONFIG,
+    2: LEVEL_2_BOARD_CONFIG
+};
+
+/** Devuelve la configuración del tablero para el nivel dado (1 o 2). */
+export function getBoardConfigForLevel(level: GameLevel): BoardConfig {
+    return BOARD_CONFIG_BY_LEVEL[level];
+}

@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import entities from '../entities';
-import { Board, DEFAULT_BOARD_CONFIG, type Cell } from '../Board';
+import { Board, type Cell } from '../Board';
+import { getBoardConfigForLevel, type GameLevel } from '../Board/type';
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
@@ -11,14 +12,21 @@ export class Game extends Scene
     background: Phaser.GameObjects.Image;
     player: InstanceType<typeof entities.player>;
     private board: Board;
+    private level: GameLevel = 1;
 
     constructor ()
     {
         super('Game');
     }
 
+    init (data: { level?: GameLevel }): void {
+        this.level = data?.level ?? 1;
+    }
+
     create ()
     {
+        const boardConfig = getBoardConfigForLevel(this.level);
+
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor(0x5a3a2a);
 
@@ -26,7 +34,7 @@ export class Game extends Scene
         const h = this.scale.height;
         this.background = this.add.image(w / 2, h / 2, 'fondo_main').setDisplaySize(w, h).setDepth(-2);
 
-        this.board = new Board(this, DEFAULT_BOARD_CONFIG);
+        this.board = new Board(this, boardConfig);
 
         this.board.drawBoard(0xc4d4a0, 0x8bac0f, 0);
 
@@ -38,8 +46,8 @@ export class Game extends Scene
         });
 
         // Posición inicial del jugador: centro abajo del tablero
-        const startCol = Math.floor(DEFAULT_BOARD_CONFIG.cols / 2);
-        const startRow = DEFAULT_BOARD_CONFIG.rows - 1;
+        const startCol = Math.floor(boardConfig.cols / 2);
+        const startRow = boardConfig.rows - 1;
         const { x: startX, y: startY } = this.board.cellToWorld(startCol, startRow);
 
         this.player = new entities.player(this, startX, startY);
