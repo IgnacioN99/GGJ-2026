@@ -28,6 +28,37 @@ export interface Cell {
     row: number;
 }
 
+/** Número entero (p. ej. coordenada o límite redondeado) */
+export type Integer = number;
+
+/** Punto en coordenadas mundo (valores enteros) */
+export interface Point {
+    x: Integer;
+    y: Integer;
+}
+
+/** Esquinas del tablero en orden: sup-izq, sup-derecha, inf-derecha, inf-izq (valores enteros) */
+export interface BoardCorners {
+    topLeft: Point;
+    topRight: Point;
+    bottomRight: Point;
+    bottomLeft: Point;
+}
+
+/** Límites geométricos (bounding box) del tablero dibujado (valores enteros) */
+export interface BoardGeometricBounds {
+    minX: Integer;
+    maxX: Integer;
+    minY: Integer;
+    maxY: Integer;
+}
+
+/** Posiciones del tablero con perspectiva: esquinas del trapecio y bounding box geométrico */
+export interface BoardPerspectivePositions {
+    corners: BoardCorners;
+    bounds: BoardGeometricBounds;
+}
+
 /** Límites del tablero: pared = límite superior, tablero pegado a la casa */
 export const DEFAULT_BOARD_CONFIG: BoardConfig = {
     cols: 5,

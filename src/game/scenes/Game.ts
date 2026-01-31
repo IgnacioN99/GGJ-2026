@@ -10,6 +10,7 @@ import {
   type Cell,
 } from "../Board";
 import { EnemySpawner } from "../enemySpawner";
+import { getBoardPerspectivePositions } from "../Board";
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = "attackAtCell";
@@ -68,9 +69,26 @@ export class Game extends Scene {
 
       const { x, y } = cellToWorld(cell.col, cell.row, this, this.boardConfig);
       this.player.moveTo(x, y);
+    });
+  }
 
-      // Ataque en esa posición (celda del tablero)
-      this.attackAtCell(cell);
+  update(): void {
+    this.input.once("pointerdown", (event: Phaser.Input.Pointer) => {
+      const { corners, bounds } = getBoardPerspectivePositions(
+        this,
+        this.boardConfig,
+      );
+
+      console.log(
+        "event.worldY:",
+        event.worldY,
+        "bounds.minY:",
+        bounds.minY,
+        "bounds.maxY:",
+        bounds.maxY,
+        "corners:",
+        corners,
+      );
     });
 
     this.enemySpawner = new EnemySpawner();
@@ -89,16 +107,5 @@ export class Game extends Scene {
   }
   constructor() {
     super("Game");
-  }
-
-  update(): void {
-    this.input.once("pointerdown", () => {
-      this.enemySpawner.forceSpawn = true;
-    });
-
-    this.enemySpawner.spawnEnemyOnScreen(this, this.level);
-    this.enemySpawner.moveEnemies(this);
-
-    this.enemySpawner.forceSpawn = false;
   }
 }
