@@ -73,4 +73,5 @@ class Player extends Phaser.GameObjects.Sprite {
 }
 
 export type { PlayerDirection } from './type';
+export { runPlayerSetup } from './setup';
 export default Player;
