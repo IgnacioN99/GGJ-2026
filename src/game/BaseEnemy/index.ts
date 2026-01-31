@@ -5,8 +5,8 @@ export abstract class BaseEnemy {
   type: EnemyTypes;
   spritePath: string;
   sprite: Phaser.GameObjects.Image;
-  width: number = 90;
-  height: number = 90;
+  width: number = 50;
+  height: number = 50;
 
   abstract move(): void;
   abstract getDistanceToHouse(): void;
@@ -17,11 +17,10 @@ export abstract class BaseEnemy {
     this.sprite.displayHeight = this.height;
   }
   /**
-   * Returns true if this enemy's sprite has fully left the screen (any edge),
-   * using sprite origin, width/height, and position.
+   * Returns true if this enemy's sprite has fully left the screen
    */
   isOutOfBounds(_scene: Phaser.Scene): boolean {
-    return false;
+    return this.sprite.x < 0;
   }
 
   /** Removes this enemy's sprite from the scene. Caller should remove from spawn list. */
