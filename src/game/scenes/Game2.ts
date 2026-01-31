@@ -27,10 +27,7 @@ export class Game2 extends Scene {
 
     const w = this.scale.width;
     const h = this.scale.height;
-    this.background = this.add
-      .image(w / 2, h / 2, "fondo_main")
-      .setDisplaySize(w, h)
-      .setDepth(-2);
+    this.background = this.add.image(w / 2, h / 2, 'fondo_01').setDisplaySize(w, h).setDepth(-2);
 
     this.board = new Board(this, boardConfig);
 

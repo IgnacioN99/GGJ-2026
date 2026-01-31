@@ -8,18 +8,30 @@ import entities, {
 } from '../entities';
 import { Board, type Cell } from '../Board';
 import { getBoardConfigForLevel } from '../Board/type';
+import { GameTimer, GameTimerEventTypes } from '../GameTimer';
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
 
+/** Claves de fondos por tono (mismo fondo, distintos tonos). Se cambian por tiempo con crossfade. */
+const FONDOS_KEYS = ['fondo_01', 'fondo_02', 'fondo_03', 'fondo_04'] as const;
+const FONDO_CROSSFADE_DURATION_MS = 2000;
+const FONDO_DEPTH = -2;
 
 export class Game1 extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
-    background: Phaser.GameObjects.Image;
     player: InstanceType<typeof entities.player>;
     private board: Board;
     private wife: Wife;
+    private gameTimer: GameTimer;
+    /** Dos capas de fondo para crossfade por opacidad. */
+    private fondoLayerA: Phaser.GameObjects.Image;
+    private fondoLayerB: Phaser.GameObjects.Image;
+    /** Índice del fondo actualmente visible (0..3). */
+    private fondoIndex = 0;
+    /** Si hay una transición de fondo en curso. */
+    private fondoTransitioning = false;
 
     constructor ()
     {
@@ -28,6 +40,9 @@ export class Game1 extends Scene
 
     create ()
     {
+        this.fondoIndex = 0;
+        this.fondoTransitioning = false;
+
         const boardConfig = getBoardConfigForLevel(1);
 
         this.camera = this.cameras.main;
@@ -35,7 +50,8 @@ export class Game1 extends Scene
 
         const w = this.scale.width;
         const h = this.scale.height;
-        this.background = this.add.image(w / 2, h / 2, 'fondo_main').setDisplaySize(w, h).setDepth(-2);
+        this.fondoLayerA = this.add.image(w / 2, h / 2, FONDOS_KEYS[0]).setDisplaySize(w, h).setDepth(FONDO_DEPTH).setAlpha(1);
+        this.fondoLayerB = this.add.image(w / 2, h / 2, FONDOS_KEYS[1]).setDisplaySize(w, h).setDepth(FONDO_DEPTH - 0.1).setAlpha(0);
 
         this.board = new Board(this, boardConfig);
 
@@ -67,7 +83,12 @@ export class Game1 extends Scene
 
         // Evento emitido cuando la Wife está abrumada
         this.wife.on(WifeEventTypes.Overwhelmed, () => {
-            this.scene.start('GameOver');
+            this.scene.start('GameOver', { won: false });
+        });
+
+        this.gameTimer = new GameTimer();
+        this.gameTimer.on(GameTimerEventTypes.Finished, () => {
+            this.scene.start('GameOver', { won: true });
         });
 
 
@@ -95,6 +116,50 @@ export class Game1 extends Scene
         });
     }
 
+    update(_time: number, delta: number): void {
+        console.log('GameTimer elapsedSeconds:', this.gameTimer.elapsedSeconds);
+        this.gameTimer.update(delta);
+        this.updateFondoByTime();
+    }
+
+    /** Cambia de fondo por tiempo: a 25%, 50% y 75% de la partida, crossfade al siguiente tono. */
+    private updateFondoByTime(): void {
+        if (this.fondoTransitioning || this.fondoIndex >= FONDOS_KEYS.length - 1) return;
+        const { elapsedSeconds, durationSeconds } = this.gameTimer.getCurrentTime();
+        const progress = elapsedSeconds / durationSeconds;
+        const nextThreshold = (this.fondoIndex + 1) / (FONDOS_KEYS.length);
+        if (progress < nextThreshold) return;
+
+        this.fondoTransitioning = true;
+        const nextIndex = this.fondoIndex + 1;
+        const incoming = this.fondoLayerB;
+        const outgoing = this.fondoLayerA;
+        incoming.setTexture(FONDOS_KEYS[nextIndex]).setAlpha(0);
+
+        this.tweens.add({
+            targets: outgoing,
+            alpha: 0,
+            duration: FONDO_CROSSFADE_DURATION_MS,
+            ease: 'Linear'
+        });
+        this.tweens.add({
+            targets: incoming,
+            alpha: 1,
+            duration: FONDO_CROSSFADE_DURATION_MS,
+            ease: 'Linear',
+            onComplete: () => {
+                this.fondoIndex = nextIndex;
+                this.fondoTransitioning = false;
+                outgoing.setAlpha(0);
+                incoming.setAlpha(1);
+                this.fondoLayerA = incoming;
+                this.fondoLayerB = outgoing;
+                this.fondoLayerA.setDepth(FONDO_DEPTH);
+                this.fondoLayerB.setDepth(FONDO_DEPTH - 0.1);
+            }
+        });
+    }
+
     /** Ejecuta el ataque en la celda indicada (puedes extender con daño, efectos, etc.) */
     attackAtCell(cell: Cell): void {
         this.events.emit(EVENT_ATTACK_AT_CELL, cell);
@@ -106,5 +171,10 @@ export class Game1 extends Scene
     /** Centro de una celda en coordenadas mundo (para E2E: comprobar que el jugador queda en la celda) */
     getCellCenter(col: number, row: number): { x: number; y: number } {
         return this.board.cellToWorld(col, row);
+    }
+
+    /** Tiempo actual de partida (para UI o pruebas). */
+    getGameTimer(): GameTimer {
+        return this.gameTimer;
     }
 }
