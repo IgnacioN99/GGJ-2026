@@ -1,5 +1,5 @@
 import type { Scene } from 'phaser';
-import type { BoardConfig, Cell } from './type';
+import type { BoardConfig, BoardCorners, BoardPerspectivePositions, Cell } from './type';
 import { DEFAULT_BOARD_CONFIG } from './type';
 
 /** Parámetros de perspectiva calculados a partir del tablero y config */
@@ -133,6 +133,73 @@ const getBoardBounds = (
     return { minX, maxX, minY, maxY, cellWidth, cellHeight };
 };
 
+/**
+ * Calcula y devuelve las posiciones del tablero teniendo en cuenta la perspectiva.
+ * - Sin perspectiva: esquinas = rectángulo (margin), bounds = mismo que getBoardBounds.
+ * - Con perspectiva: esquinas = 4 vértices del trapecio, bounds = min/max reales (ej. minY ~ vpY).
+ */
+const getBoardPerspectivePositions = (
+    scene: Scene,
+    config: BoardConfig = DEFAULT_BOARD_CONFIG
+): BoardPerspectivePositions => {
+    const rect = getBoardBounds(scene, config);
+    const { cols, rows } = config;
+
+    if (!hasPerspective(config)) {
+        const { minX, maxX, minY, maxY } = rect;
+        return {
+            corners: {
+                topLeft: { x: Math.round(minX), y: Math.round(minY) },
+                topRight: { x: Math.round(maxX), y: Math.round(minY) },
+                bottomRight: { x: Math.round(maxX), y: Math.round(maxY) },
+                bottomLeft: { x: Math.round(minX), y: Math.round(maxY) }
+            },
+            bounds: {
+                minX: Math.round(minX),
+                maxX: Math.round(maxX),
+                minY: Math.round(minY),
+                maxY: Math.round(maxY)
+            }
+        };
+    }
+
+    const topLeftQuad = getCellQuad(scene, config, 0, 0);
+    const topRightQuad = getCellQuad(scene, config, cols - 1, 0);
+    const bottomRightQuad = getCellQuad(scene, config, cols - 1, rows - 1);
+    const bottomLeftQuad = getCellQuad(scene, config, 0, rows - 1);
+
+    const roundPoint = (p: { x: number; y: number }) => ({ x: Math.round(p.x), y: Math.round(p.y) });
+    const corners: BoardCorners = {
+        topLeft: roundPoint(topLeftQuad[3]),
+        topRight: roundPoint(topRightQuad[2]),
+        bottomRight: roundPoint(bottomRightQuad[1]),
+        bottomLeft: roundPoint(bottomLeftQuad[0])
+    };
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const quad = getCellQuad(scene, config, col, row);
+            for (const p of quad) {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            }
+        }
+    }
+
+    return {
+        corners,
+        bounds: {
+            minX: Math.round(minX),
+            maxX: Math.round(maxX),
+            minY: Math.round(minY),
+            maxY: Math.round(maxY)
+        }
+    };
+};
+
 /** Convierte coordenadas mundo (x, y) a celda del tablero (col, row). Devuelve null si está fuera. */
 const worldToCell = (
     worldX: number,
@@ -255,6 +322,6 @@ const drawBoard = (
     return graphics;
 };
 
-export type { BoardConfig, Cell } from './type';
+export type { BoardConfig, BoardCorners, BoardGeometricBounds, BoardPerspectivePositions, Cell, Integer, Point } from './type';
 export { DEFAULT_BOARD_CONFIG } from './type';
-export { getBoardBounds, worldToCell, worldToNearestCell, cellToWorld, drawBoard };
+export { getBoardBounds, getBoardPerspectivePositions, worldToCell, worldToNearestCell, cellToWorld, drawBoard };
