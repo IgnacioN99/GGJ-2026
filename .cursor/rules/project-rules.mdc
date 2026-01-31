@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+The entity creation follow the following pattern:
+-- Entity name:
+ - index.ts: Export the entity
+ - type.ts: Export the type of the entity
+
+This project is a simple 2D game built with Phaser 3.
+
+This game is based on the game "Plants vs Zombies".
+
+The main idea is that the enemy comes to the base of the player and the player has to defend it. (Tower Defense Game)
+
+
+To test the implementation of the task given by the user, there is available the playwright mcp server.
