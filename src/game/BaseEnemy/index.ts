@@ -5,8 +5,8 @@ export abstract class BaseEnemy {
   type: EnemyTypes;
   spritePath: string;
   sprite: Phaser.GameObjects.Image;
-  width: number = 100;
-  height: number = 150;
+  width: number = 50;
+  height: number = 50;
 
   abstract move(): void;
   abstract getDistanceToHouse(): void;

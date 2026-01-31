@@ -1,21 +1,22 @@
+import { Scene } from "phaser";
 import { CascabelEnemy } from "../BaseEnemy/CascabelEnemy";
 import { BaseEnemy } from "../BaseEnemy/index";
-import { Game } from "../scenes/Game";
-
-const SPAWN_X_OFFSET: number = 50;
-let SPAWN_Y_OFFSET: number = 50;
+import { Board } from "../Board";
 
 export class EnemySpawner {
   private spawnedEnemies: BaseEnemy[] = [];
+  private board: Board;
+
   public forceSpawn: boolean = false;
 
-  private introSpawnStrategy(
-    scene: Game,
-    enemy: BaseEnemy,
-    x: number,
-    y: number,
-  ): void {
+  constructor(board: Board) {
+    this.board = board;
+  }
+
+  private introSpawnStrategy(scene: Scene, x: number, y: number): void {
+    const enemy = new CascabelEnemy();
     if (this.spawnedEnemies.length === 0 || this.forceSpawn) {
+      this.forceSpawn = false;
       enemy.setSprite(x, y, scene);
       this.spawnedEnemies.push(enemy);
       console.log("[EnemySpawner] Enemy spawned", enemy.type);
@@ -23,18 +24,15 @@ export class EnemySpawner {
     }
   }
 
-  public spawnEnemyOnScreen(scene: Game, level: number): void {
-    const enemy = new CascabelEnemy();
-    // pick a random lane (1 to 4)
-    const lane = Math.floor(Math.random() * 4);
-    const x = scene.background.width + SPAWN_X_OFFSET;
-
-    SPAWN_Y_OFFSET = enemy.height / 2;
-    const y = (scene.background.height / 4) * lane + SPAWN_Y_OFFSET + 10;
+  public spawnEnemyOnScreen(scene: Scene, level: number): void {
+    // pick a random lane
+    const randomRow = Math.floor(Math.random() * this.board.getTotalRows());
+    const { y } = this.board.cellToWorld(0, randomRow);
+    const x = scene.scale.width;
 
     // spawn
     if (level === 1) {
-      this.introSpawnStrategy(scene, enemy, x, y);
+      this.introSpawnStrategy(scene, x, y);
     }
   }
 
