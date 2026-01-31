@@ -28,14 +28,14 @@ export class Game extends Scene
     create ()
     {
         this.camera = this.cameras.main;
-        this.camera.setBackgroundColor(0x00ff00);
+        this.camera.setBackgroundColor(0x5a3a2a);
 
-        this.background = this.add.image(512, 384, 'background');
-        this.background.setAlpha(0.5);
+        const w = this.scale.width;
+        const h = this.scale.height;
+        this.background = this.add.image(w / 2, h / 2, 'fondo_main').setDisplaySize(w, h).setDepth(-2);
 
         this.boardConfig = DEFAULT_BOARD_CONFIG;
 
-        // Tablero tipo ajedrez (damero) en la mitad izquierda
         drawBoard(this, this.boardConfig);
 
         // Posición inicial del jugador: centro abajo del tablero

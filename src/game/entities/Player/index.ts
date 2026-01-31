@@ -13,6 +13,7 @@ class Player extends Phaser.GameObjects.Sprite {
         this.targetX = x;
         this.targetY = y;
         this.setOrigin(0.5, 0.5); // centro del sprite como punto de referencia
+        this.setScale(0.5); // tamaño reducido para que encaje en las celdas del tablero
     }
 
     moveTo(worldX: number, worldY: number): void {

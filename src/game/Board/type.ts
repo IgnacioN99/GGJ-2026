@@ -8,6 +8,12 @@ export interface BoardConfig {
     margin: number;
     /** Margen superior en píxeles (por defecto usa margin) */
     marginTop?: number;
+    /** Margen izquierdo en píxeles (por defecto usa margin). Usado para alinear con la pared del fondo. */
+    marginLeft?: number;
+    /** Margen derecho en píxeles (por defecto usa margin). Usado para alinear con la pared del fondo. */
+    marginRight?: number;
+    /** Margen inferior en píxeles (por defecto usa margin). */
+    marginBottom?: number;
     /** Píxeles por encima de minY donde está el punto de fuga (ej. 60). Sin definir = perspectiva plana. */
     vanishingPointYOffset?: number;
     /** Factor 0..1; cuánto se estrecha el ancho en la fila lejana (ej. 0.6 = fila arriba tiene 40% del ancho de abajo). Sin definir = tablero plano. */
@@ -22,11 +28,15 @@ export interface Cell {
     row: number;
 }
 
+/** Límites del tablero: pared = límite superior, tablero pegado a la casa */
 export const DEFAULT_BOARD_CONFIG: BoardConfig = {
     cols: 5,
     rows: 4,
     margin: 20,
-    marginTop: 420,
+    marginTop: 560,
+    marginLeft: 60,
+    marginRight: 370,
+    marginBottom: 0,
     vanishingPointYOffset: 80,
     perspectiveShrink: 0.5,
     perspectiveYCompression: 1.5
