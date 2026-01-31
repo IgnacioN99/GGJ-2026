@@ -28,7 +28,7 @@ export class Preloader extends Scene {
     this.load.setPath("assets");
 
     this.load.image("logo", "logo.png");
-    this.load.image(CascabelEnemy.spritePath);
+    this.load.image(CascabelEnemy.spritePath, CascabelEnemy.spritePath);
     this.load.image("fondo_main", "fondo_main.png");
     this.load.image("player_raw", "player/player-spritesheet.png");
   }
