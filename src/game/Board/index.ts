@@ -120,7 +120,7 @@ export class Board {
         return inside;
     }
 
-    /** Área del tablero en coordenadas mundo (delimitada por la pared del fondo_main) */
+    /** Área del tablero en coordenadas mundo (delimitada por la pared del fondo_01) */
     getBoardBounds(): BoardBounds {
         const w = this.scene.scale.width;
         const h = this.scene.scale.height;
