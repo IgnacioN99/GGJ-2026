@@ -1,8 +1,7 @@
 import { CascabelEnemy } from "../BaseEnemy/CascabelEnemy";
 import { BaseEnemy } from "../BaseEnemy/index";
+import { cellToWorld, DEFAULT_BOARD_CONFIG } from "../Board";
 import { Game } from "../scenes/Game";
-
-const SPAWN_X_OFFSET = 50;
 
 export class EnemySpawner {
   private spawnedEnemies: BaseEnemy[] = [];
@@ -15,24 +14,18 @@ export class EnemySpawner {
     y: number,
   ): void {
     if (this.spawnedEnemies.length === 0 || this.forceSpawn) {
+      this.forceSpawn = false;
       enemy.setSprite(x, y, scene);
       this.spawnedEnemies.push(enemy);
-      console.log("[EnemySpawner] Enemy spawned", enemy.type);
       return;
     }
   }
 
-  public spawnEnemyOnScreen(
-    scene: Game,
-    level: number,
-    startBoardY: number,
-  ): void {
+  public spawnEnemyOnScreen(scene: Game, level: number): void {
     const enemy = new CascabelEnemy();
-    // pick a random lane (0 to 3)
-    const lane = Math.floor(Math.random() * 4);
+    const fila = Math.floor(Math.random() * 4);
+    const { y } = cellToWorld(0, fila, scene, DEFAULT_BOARD_CONFIG);
     const x = scene.scale.width;
-    const laneHeight = (scene.scale.height - startBoardY) / 4;
-    const y = startBoardY + laneHeight * lane;
 
     // spawn
     if (level === 1) {
