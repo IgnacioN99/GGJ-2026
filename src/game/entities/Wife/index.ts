@@ -1,11 +1,6 @@
 import { Events } from 'phaser';
-import {
-  DEFAULT_MAX_SOUND,
-  WIFE_EVENT_SOUND_ADDED,
-  WIFE_EVENT_SOUND_REDUCED,
-  WIFE_EVENT_OVERWHELMED,
-  WIFE_EVENT_RESET
-} from './const';
+import { DEFAULT_MAX_SOUND, WifeEventTypes } from './const';
+import type { SoundAddedAction, SoundReducedAction } from './type';
 
 /**
  * Entidad que representa la vida/base que el jugador defiende.
@@ -16,10 +11,13 @@ export class Wife extends Events.EventEmitter {
   private _currentSound: number;
   private _maxSound: number;
 
-  constructor(maxSound: number = DEFAULT_MAX_SOUND) {
+  constructor(maxSound: number = DEFAULT_MAX_SOUND, scene: Phaser.Scene) {
     super();
     this._maxSound = Math.max(1, maxSound);
     this._currentSound = 0;
+
+    scene.events.on(WifeEventTypes.SoundAdded, (action: SoundAddedAction) => this.addSound(action.payload), this);
+    scene.events.on(WifeEventTypes.SoundReduced, (action: SoundReducedAction) => this.reduceSound(action.payload), this);
   }
 
   get currentSound(): number {
@@ -30,7 +28,7 @@ export class Wife extends Events.EventEmitter {
     return this._maxSound;
   }
 
-  /** Añade sonido. Emite WIFE_EVENT_SOUND_ADDED y WIFE_EVENT_OVERWHELMED si supera el tope. */
+  /** Añade sonido. Emite SoundAdded y Overwhelmed si supera el tope. */
   addSound(amount: number): void {
     if (amount <= 0 || this.isOverwhelmed()) return;
 
@@ -39,19 +37,22 @@ export class Wife extends Events.EventEmitter {
     const actualAdded = this._currentSound - prev;
 
     if (actualAdded > 0) {
-      this.emit(WIFE_EVENT_SOUND_ADDED, {
-        amount: actualAdded,
-        currentSound: this._currentSound,
-        maxSound: this._maxSound
+      this.emit(WifeEventTypes.SoundAdded, {
+        type: WifeEventTypes.SoundAdded,
+        payload: {
+          amount: actualAdded,
+          currentSound: this._currentSound,
+          maxSound: this._maxSound
+        }
       });
     }
 
     if (this._currentSound >= this._maxSound) {
-      this.emit(WIFE_EVENT_OVERWHELMED);
+      this.emit(WifeEventTypes.Overwhelmed, { type: WifeEventTypes.Overwhelmed });
     }
   }
 
-  /** Reduce sonido (ej. cuando hay calma). Emite WIFE_EVENT_SOUND_REDUCED. */
+  /** Reduce sonido (ej. cuando hay calma). Emite SoundReduced. */
   reduceSound(amount: number): void {
     if (amount <= 0 || this._currentSound <= 0) return;
 
@@ -60,10 +61,13 @@ export class Wife extends Events.EventEmitter {
     const actualReduced = prev - this._currentSound;
 
     if (actualReduced > 0) {
-      this.emit(WIFE_EVENT_SOUND_REDUCED, {
-        amount: actualReduced,
-        currentSound: this._currentSound,
-        maxSound: this._maxSound
+      this.emit(WifeEventTypes.SoundReduced, {
+        type: WifeEventTypes.SoundReduced,
+        payload: {
+          amount: actualReduced,
+          currentSound: this._currentSound,
+          maxSound: this._maxSound
+        }
       });
     }
   }
@@ -72,18 +76,15 @@ export class Wife extends Events.EventEmitter {
     return this._currentSound >= this._maxSound;
   }
 
-  /** Reinicia el sonido a 0. Emite WIFE_EVENT_RESET. */
+  /** Reinicia el sonido a 0. Emite WifeEventTypes.Reset. */
   reset(): void {
     this._currentSound = 0;
-    this.emit(WIFE_EVENT_RESET, { currentSound: this._currentSound, maxSound: this._maxSound });
+    this.emit(WifeEventTypes.Reset, {
+      type: WifeEventTypes.Reset,
+      payload: { currentSound: this._currentSound, maxSound: this._maxSound }
+    });
   }
 }
 
-export type { WifeState } from './type';
-export {
-  DEFAULT_MAX_SOUND,
-  WIFE_EVENT_SOUND_ADDED,
-  WIFE_EVENT_SOUND_REDUCED,
-  WIFE_EVENT_OVERWHELMED,
-  WIFE_EVENT_RESET
-} from './const';
+export type { WifeState, WifeSceneAction, WifeEmittedAction } from './type';
+export { DEFAULT_MAX_SOUND, WifeEventTypes, soundAdded, soundReduced } from './const';

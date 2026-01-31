@@ -2,9 +2,11 @@ import { Scene } from 'phaser';
 import entities from '../entities';
 import { Board, type Cell } from '../Board';
 import { getBoardConfigForLevel } from '../Board/type';
+import { Wife, DEFAULT_MAX_SOUND, WifeEventTypes, soundReduced } from '../entities/Wife';
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
+
 
 export class Game1 extends Scene
 {
@@ -12,6 +14,7 @@ export class Game1 extends Scene
     background: Phaser.GameObjects.Image;
     player: InstanceType<typeof entities.player>;
     private board: Board;
+    private wife: Wife;
 
     constructor ()
     {
@@ -47,6 +50,16 @@ export class Game1 extends Scene
 
         this.player = new entities.player(this, startX, startY);
         this.add.existing(this.player);
+
+        this.wife = new Wife(DEFAULT_MAX_SOUND, this);
+
+
+        // Evento emitido cuando la Wife está abrumada
+        this.wife.on(WifeEventTypes.Overwhelmed, () => {
+            this.scene.start('GameOver');
+        });
+
+
 
         // Expuesto para E2E (Playwright): leer posición del jugador y comprobar que está en celdas del tablero
         if (typeof window !== 'undefined') {
@@ -86,6 +99,8 @@ export class Game1 extends Scene
     /** Ejecuta el ataque en la celda indicada (puedes extender con daño, efectos, etc.) */
     attackAtCell(cell: Cell): void {
         this.events.emit(EVENT_ATTACK_AT_CELL, cell);
+        // reemplazar por la cantidad de sonido que se reduce por el ataque
+        this.events.emit(WifeEventTypes.SoundReduced, soundReduced(10));
         // Aquí puedes añadir lógica de daño, animación, sonido, etc.
     }
 
