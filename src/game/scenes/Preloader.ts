@@ -1,5 +1,4 @@
 import { Scene } from "phaser";
-import { runPlayerSetup } from "../entities/Player";
 
 export class Preloader extends Scene {
   constructor() {
@@ -24,12 +23,13 @@ export class Preloader extends Scene {
       "enemies/cascabel/sprite.png",
       "enemies/cascabel/sprite.png",
     );
+    this.load.image("enemies/diablo/sprite.png", "enemies/diablo/sprite.png");
+    this.load.image("enemies/tambor/sprite.png", "enemies/tambor/sprite.png");
     this.load.image("fondo_main", "fondo_main.png");
-    this.load.image("player_raw", "player/player-spritesheet.png");
+    this.load.image("player", "player/sprite.png");
   }
 
   create() {
-    runPlayerSetup(this);
     this.scene.start("MainMenu");
   }
 }

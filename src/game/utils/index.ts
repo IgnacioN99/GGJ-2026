@@ -2,15 +2,16 @@ import type { Scene } from "phaser";
 import type { CreateTextureWithoutDummyOptions } from "./type";
 
 /**
- * Considera si un pixel es fondo dummy (blanco, gris, damero) para hacerlo transparente.
+ * Considera si un pixel es fondo dummy (blanco, gris, damero, negro) para hacerlo transparente.
  */
 function isDummyBackground(r: number, g: number, b: number): boolean {
   const t = 30;
+  const black = r < t && g < t && b < t;
   const gray =
     Math.abs(r - g) < t && Math.abs(g - b) < t && Math.abs(r - b) < t;
   const midGray = gray && r >= 100 && r <= 200;
   const white = r >= 250 && g >= 250 && b >= 250;
-  return white || midGray || (gray && r >= 170);
+  return black || white || midGray || (gray && r >= 170);
 }
 
 /**

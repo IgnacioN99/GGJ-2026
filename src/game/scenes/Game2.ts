@@ -2,7 +2,7 @@ import { Scene } from "phaser";
 import entities from "../entities";
 import { Board } from "../Board";
 import { getBoardConfigForLevel } from "../Board/type";
-import { EnemySpawner } from "../enemySpawner";
+import { EnemySpawner } from "../EnemySpawner";
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = "attackAtCell";
@@ -70,6 +70,7 @@ export class Game2 extends Scene {
 
   update(): void {
     this.enemySpawner.spawnEnemyOnScreen(this, this.level);
+    this.enemySpawner.checkPlayerCollisions(this.player);
     this.enemySpawner.moveEnemies(this);
   }
 }
