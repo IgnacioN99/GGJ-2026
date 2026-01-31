@@ -5,7 +5,7 @@ export enum EnemyTypes {
 }
 
 export const SPEED_BY_TYPE: Record<EnemyTypes, number> = {
-  [EnemyTypes.CASCABEL]: 1,
-  [EnemyTypes.TAMBOR]: 2,
-  [EnemyTypes.DIABLO]: 3,
+  [EnemyTypes.CASCABEL]: 5,
+  [EnemyTypes.TAMBOR]: 5,
+  [EnemyTypes.DIABLO]: 5,
 };

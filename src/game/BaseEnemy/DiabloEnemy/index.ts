@@ -1,11 +1,11 @@
 import { BaseEnemy } from "../index";
 import { EnemyTypes, SPEED_BY_TYPE } from "../types";
 
-export class CascabelEnemy extends BaseEnemy {
+export class DiabloEnemy extends BaseEnemy {
   constructor() {
     super();
-    this.type = EnemyTypes.CASCABEL;
+    this.type = EnemyTypes.DIABLO;
     this.speed = SPEED_BY_TYPE[this.type];
-    this.spritePath = "enemies/cascabel/sprite.png";
+    this.spritePath = "enemies/diablo/sprite.png";
   }
 }

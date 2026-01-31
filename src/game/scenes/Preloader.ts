@@ -1,5 +1,4 @@
 import { Scene } from "phaser";
-import { runPlayerSetup } from "../entities/Player";
 
 export class Preloader extends Scene {
   constructor() {
@@ -28,7 +27,9 @@ export class Preloader extends Scene {
     this.load.image("fondo_02", "fondos/fondo_02.png");
     this.load.image("fondo_03", "fondos/fondo_03.png");
     this.load.image("fondo_04", "fondos/fondo_04.png");
-    this.load.image("player_raw", "player/player-spritesheet.png");
+    this.load.image("enemies/diablo/sprite.png", "enemies/diablo/sprite.png");
+    this.load.image("enemies/tambor/sprite.png", "enemies/tambor/sprite.png");
+    this.load.image("player", "player/sprite.png");
     // Vida de la Wife: 1 = peor (cerca de 0), 4 = mejor (100%)
     this.load.image("wife_life_1", "wife/Dolores_doodle_1.png");
     this.load.image("wife_life_2", "wife/Dolores_doodle_2.png");
@@ -37,7 +38,6 @@ export class Preloader extends Scene {
   }
 
   create() {
-    runPlayerSetup(this);
     this.scene.start("MainMenu");
   }
 }

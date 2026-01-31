@@ -1,18 +1,38 @@
+import type Player from "../entities/Player";
 import { EnemyTypes } from "./types";
 
 export abstract class BaseEnemy {
-  speed: number;
+  speed: number = 0.5;
   type: EnemyTypes;
   spritePath: string;
+  tint?: number;
   sprite: Phaser.GameObjects.Image;
   width: number = 100;
-  height: number = 150;
+  height: number = 100;
+  life: number = 100;
+  canMove: boolean = true;
 
-  abstract move(): void;
-  abstract getDistanceToHouse(): void;
+  move(): void {
+    if (this.getDistanceToHouse() > 250 && this.canMove) {
+      this.sprite.x -= this.speed;
+    }
+  }
+
+  getDistanceToHouse(): number {
+    return this.sprite.x;
+  }
+
+  /** Called when this enemy collides with the player. Override in subclasses. */
+  onCollisionWithPlayer(_player: Player): void {
+    console.log("[BaseEnemy] Enemy collided with player", this.type);
+  }
 
   setSprite(x: number, y: number, scene: Phaser.Scene): void {
     this.sprite = scene.add.image(x, y, this.spritePath);
+    this.sprite.setOrigin(0.5, 1);
+    if (this.tint) {
+      this.sprite.setTint(this.tint);
+    }
     this.sprite.displayWidth = this.width;
     this.sprite.displayHeight = this.height;
   }
