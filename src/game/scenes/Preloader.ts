@@ -26,6 +26,11 @@ export class Preloader extends Scene {
     );
     this.load.image("fondo_main", "fondo_main.png");
     this.load.image("player_raw", "player/player-spritesheet.png");
+    // Vida de la Wife: 1 = peor (cerca de 0), 4 = mejor (100%)
+    this.load.image("wife_life_1", "wife/Dolores_doodle_1.png");
+    this.load.image("wife_life_2", "wife/Dolores_doodle_2.png");
+    this.load.image("wife_life_3", "wife/Dolores_doodle_3.png");
+    this.load.image("wife_life_4", "wife/Dolores_doodle_4.png");
   }
 
   create() {

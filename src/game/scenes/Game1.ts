@@ -1,10 +1,17 @@
 import { Scene } from 'phaser';
-import entities from '../entities';
+import entities, {
+  Wife,
+  DEFAULT_MAX_SOUND,
+  WifeEventTypes,
+  soundReduced,
+  WifeLifeDisplay
+} from '../entities';
 import { Board, type Cell } from '../Board';
 import { getBoardConfigForLevel } from '../Board/type';
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
+
 
 export class Game1 extends Scene
 {
@@ -12,6 +19,7 @@ export class Game1 extends Scene
     background: Phaser.GameObjects.Image;
     player: InstanceType<typeof entities.player>;
     private board: Board;
+    private wife: Wife;
 
     constructor ()
     {
@@ -48,6 +56,22 @@ export class Game1 extends Scene
         this.player = new entities.player(this, startX, startY);
         this.add.existing(this.player);
 
+        this.wife = new Wife(DEFAULT_MAX_SOUND, this);
+        const wifeLifeDisplay = new WifeLifeDisplay(this, this.wife, {
+            x: 80,
+            y: 80,
+            width: 200,
+            height:200
+        });
+        this.add.existing(wifeLifeDisplay);
+
+        // Evento emitido cuando la Wife está abrumada
+        this.wife.on(WifeEventTypes.Overwhelmed, () => {
+            this.scene.start('GameOver');
+        });
+
+
+
         // Expuesto para E2E (Playwright): leer posición del jugador y comprobar que está en celdas del tablero
         if (typeof window !== 'undefined') {
             (window as unknown as { __gameScene?: Game1 }).__gameScene = this;
@@ -63,29 +87,19 @@ export class Game1 extends Scene
             // Ataque en esa posición (celda del tablero)
             this.attackAtCell(cell);
         });
-    }
 
-    update(): void {
-        this.input.once("pointerdown", (event: Phaser.Input.Pointer) => {
 
-      const {corners, bounds} = this.board.getBoardPerspectivePositions();
-
-      console.log(
-        "event.worldY:",
-        event.worldY,
-        "bounds.minY:",
-        bounds.minY,
-        "bounds.maxY:",
-        bounds.maxY,
-        "corners:",
-        corners
-      );
-    });
+        this.input.keyboard?.on('keydown-K', () => {
+            this.wife.addSound(10);
+            console.log('Wife current sound:', this.wife.currentSound);
+        });
     }
 
     /** Ejecuta el ataque en la celda indicada (puedes extender con daño, efectos, etc.) */
     attackAtCell(cell: Cell): void {
         this.events.emit(EVENT_ATTACK_AT_CELL, cell);
+        // reemplazar por la cantidad de sonido que se reduce por el ataque
+        this.events.emit(WifeEventTypes.SoundReduced, soundReduced(10));
         // Aquí puedes añadir lógica de daño, animación, sonido, etc.
     }
 
