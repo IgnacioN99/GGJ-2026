@@ -1,15 +1,6 @@
 import { Scene } from 'phaser';
 import entities from '../entities';
-import {
-    DEFAULT_BOARD_CONFIG,
-    worldToCell,
-    worldToNearestCell,
-    cellToWorld,
-    drawBoard,
-    type BoardConfig,
-    type Cell
-} from '../Board';
-import { getBoardPerspectivePositions } from '../Board';
+import { Board, DEFAULT_BOARD_CONFIG, type Cell } from '../Board';
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
@@ -19,7 +10,7 @@ export class Game extends Scene
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
     player: InstanceType<typeof entities.player>;
-    private boardConfig: BoardConfig;
+    private board: Board;
 
     constructor ()
     {
@@ -35,14 +26,14 @@ export class Game extends Scene
         const h = this.scale.height;
         this.background = this.add.image(w / 2, h / 2, 'fondo_main').setDisplaySize(w, h).setDepth(-2);
 
-        this.boardConfig = DEFAULT_BOARD_CONFIG;
+        this.board = new Board(this, DEFAULT_BOARD_CONFIG);
 
-        drawBoard(this, this.boardConfig);
+        this.board.drawBoard();
 
         // Posición inicial del jugador: centro abajo del tablero
-        const startCol = Math.floor(this.boardConfig.cols / 2);
-        const startRow = this.boardConfig.rows - 1;
-        const { x: startX, y: startY } = cellToWorld(startCol, startRow, this, this.boardConfig);
+        const startCol = Math.floor(DEFAULT_BOARD_CONFIG.cols / 2);
+        const startRow = DEFAULT_BOARD_CONFIG.rows - 1;
+        const { x: startX, y: startY } = this.board.cellToWorld(startCol, startRow);
 
         this.player = new entities.player(this, startX, startY);
         this.add.existing(this.player);
@@ -53,10 +44,10 @@ export class Game extends Scene
         }
 
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            const cell = worldToCell(pointer.worldX, pointer.worldY, this, this.boardConfig)
-                ?? worldToNearestCell(pointer.worldX, pointer.worldY, this, this.boardConfig);
+            const cell = this.board.worldToCell(pointer.worldX, pointer.worldY)
+                ?? this.board.worldToNearestCell(pointer.worldX, pointer.worldY);
 
-            const { x, y } = cellToWorld(cell.col, cell.row, this, this.boardConfig);
+            const { x, y } = this.board.cellToWorld(cell.col, cell.row);
             this.player.moveTo(x, y);
 
             // Ataque en esa posición (celda del tablero)
@@ -67,7 +58,7 @@ export class Game extends Scene
     update(): void {
         this.input.once("pointerdown", (event: Phaser.Input.Pointer) => {
 
-      const {corners, bounds} = getBoardPerspectivePositions(this, this.boardConfig);
+      const {corners, bounds} = this.board.getBoardPerspectivePositions();
 
       console.log(
         "event.worldY:",
@@ -90,6 +81,6 @@ export class Game extends Scene
 
     /** Centro de una celda en coordenadas mundo (para E2E: comprobar que el jugador queda en la celda) */
     getCellCenter(col: number, row: number): { x: number; y: number } {
-        return cellToWorld(col, row, this, this.boardConfig);
+        return this.board.cellToWorld(col, row);
     }
 }
