@@ -2,8 +2,7 @@ import { CascabelEnemy } from "../BaseEnemy/CascabelEnemy";
 import { BaseEnemy } from "../BaseEnemy/index";
 import { Game } from "../scenes/Game";
 
-const SPAWN_X_OFFSET: number = 50;
-let SPAWN_Y_OFFSET: number = 50;
+const SPAWN_X_OFFSET = 50;
 
 export class EnemySpawner {
   private spawnedEnemies: BaseEnemy[] = [];
@@ -23,14 +22,17 @@ export class EnemySpawner {
     }
   }
 
-  public spawnEnemyOnScreen(scene: Game, level: number): void {
+  public spawnEnemyOnScreen(
+    scene: Game,
+    level: number,
+    startBoardY: number,
+  ): void {
     const enemy = new CascabelEnemy();
-    // pick a random lane (1 to 4)
+    // pick a random lane (0 to 3)
     const lane = Math.floor(Math.random() * 4);
-    const x = scene.background.width + SPAWN_X_OFFSET;
-
-    SPAWN_Y_OFFSET = enemy.height / 2;
-    const y = (scene.background.height / 4) * lane + SPAWN_Y_OFFSET + 10;
+    const x = scene.scale.width;
+    const laneHeight = (scene.scale.height - startBoardY) / 4;
+    const y = startBoardY + laneHeight * lane;
 
     // spawn
     if (level === 1) {

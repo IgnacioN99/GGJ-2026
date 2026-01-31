@@ -1,7 +1,6 @@
 import { Scene } from "phaser";
 import entities from "../entities";
 import {
-  DEFAULT_BOARD_CONFIG,
   worldToCell,
   worldToNearestCell,
   cellToWorld,
@@ -10,7 +9,11 @@ import {
   type Cell,
 } from "../Board";
 import { EnemySpawner } from "../enemySpawner";
+<<<<<<< Updated upstream
 import { getBoardPerspectivePositions } from "../Board";
+=======
+import { getBoardBounds, DEFAULT_BOARD_CONFIG } from "../Board";
+>>>>>>> Stashed changes
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = "attackAtCell";
@@ -23,6 +26,7 @@ export class Game extends Scene {
   private enemySpawner: EnemySpawner;
   player: InstanceType<typeof entities.player>;
   private boardConfig: BoardConfig;
+  private topY: number;
 
   create() {
     this.camera = this.cameras.main;
@@ -59,7 +63,7 @@ export class Game extends Scene {
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       const cell =
-        worldToCell(pointer.worldX, pointer.worldY, this, this.boardConfig) ??
+        worldToCell(pointer.worldX, pointer.worldY, this) ??
         worldToNearestCell(
           pointer.worldX,
           pointer.worldY,
@@ -91,8 +95,31 @@ export class Game extends Scene {
       );
     });
 
+    this.topY = 484;
     this.enemySpawner = new EnemySpawner();
-    this.enemySpawner.spawnEnemyOnScreen(this, this.level);
+    this.enemySpawner.spawnEnemyOnScreen(this, this.level, this.topY);
+  }
+
+  update(): void {
+    this.input.once("pointerdown", (event: Phaser.Input.Pointer) => {
+      this.enemySpawner.forceSpawn = true;
+
+      const bounds = getBoardBounds(this, this.boardConfig);
+
+      console.log(
+        "event.worldY:",
+        event.worldY,
+        "bounds.minY:",
+        bounds.minY,
+        "bounds.maxY:",
+        bounds.maxY,
+      );
+    });
+
+    /*this.enemySpawner.spawnEnemyOnScreen(this, this.level, this.topY);
+    this.enemySpawner.moveEnemies(this);
+
+    this.enemySpawner.forceSpawn = false;*/
   }
 
   /** Ejecuta el ataque en la celda indicada (puedes extender con daño, efectos, etc.) */

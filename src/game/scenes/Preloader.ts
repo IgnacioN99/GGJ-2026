@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { CascabelEnemy } from "../BaseEnemy/CascabelEnemy";
 
 export class Preloader extends Scene {
   constructor() {
@@ -27,10 +28,7 @@ export class Preloader extends Scene {
     this.load.setPath("assets");
 
     this.load.image("logo", "logo.png");
-    this.load.image(
-      "enemies/cascabel/sprite.png",
-      "enemies/cascabel/sprite.png",
-    );
+    this.load.image(CascabelEnemy.spritePath);
     this.load.image("fondo_main", "fondo_main.png");
     this.load.image("player_raw", "player/player-spritesheet.png");
   }
