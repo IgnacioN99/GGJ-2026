@@ -9,6 +9,7 @@ import {
     type BoardConfig,
     type Cell
 } from '../Board';
+import { getBoardPerspectivePositions } from '../Board';
 
 /** Evento emitido cuando el jugador ataca en una celda del tablero */
 export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
@@ -61,6 +62,24 @@ export class Game extends Scene
             // Ataque en esa posición (celda del tablero)
             this.attackAtCell(cell);
         });
+    }
+
+    update(): void {
+        this.input.once("pointerdown", (event: Phaser.Input.Pointer) => {
+
+      const {corners, bounds} = getBoardPerspectivePositions(this, this.boardConfig);
+
+      console.log(
+        "event.worldY:",
+        event.worldY,
+        "bounds.minY:",
+        bounds.minY,
+        "bounds.maxY:",
+        bounds.maxY,
+        "corners:",
+        corners
+      );
+    });
     }
 
     /** Ejecuta el ataque en la celda indicada (puedes extender con daño, efectos, etc.) */
