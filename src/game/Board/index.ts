@@ -26,6 +26,8 @@ interface PerspectiveParams {
 }
 
 export class Board {
+    private hoverGraphics?: Phaser.GameObjects.Graphics;
+
     constructor(
         private readonly scene: Scene,
         private readonly config: BoardConfig = DEFAULT_BOARD_CONFIG
@@ -263,41 +265,71 @@ export class Board {
     /** Dibuja el tablero tipo ajedrez en la escena */
     drawBoard(
         colorLight: number = 0xc4d4a0,
-        colorDark: number = 0x8bac0f
+        colorDark: number = 0x8bac0f,
+        alpha: number = 0.5
     ): Phaser.GameObjects.Graphics {
         const graphics = this.scene.add.graphics();
         graphics.setDepth(-1);
 
-        if (!this.hasPerspective()) {
-            const bounds = this.getBoardBounds();
-            const { cellWidth, cellHeight, minX, minY } = bounds;
-            const gap = 2;
-            for (let row = 0; row < this.config.rows; row++) {
-                for (let col = 0; col < this.config.cols; col++) {
-                    const isLight = (col + row) % 2 === 0;
-                    const color = isLight ? colorLight : colorDark;
-                    const x = minX + col * cellWidth + gap / 2;
-                    const y = minY + row * cellHeight + gap / 2;
-                    const w = cellWidth - gap;
-                    const h = cellHeight - gap;
-                    graphics.fillStyle(color);
-                    graphics.fillRect(x, y, w, h);
+        if (alpha > 0) {
+            if (!this.hasPerspective()) {
+                const bounds = this.getBoardBounds();
+                const { cellWidth, cellHeight, minX, minY } = bounds;
+                const gap = 2;
+                for (let row = 0; row < this.config.rows; row++) {
+                    for (let col = 0; col < this.config.cols; col++) {
+                        const isLight = (col + row) % 2 === 0;
+                        const color = isLight ? colorLight : colorDark;
+                        const x = minX + col * cellWidth + gap / 2;
+                        const y = minY + row * cellHeight + gap / 2;
+                        const w = cellWidth - gap;
+                        const h = cellHeight - gap;
+                        graphics.fillStyle(color, alpha);
+                        graphics.fillRect(x, y, w, h);
+                    }
+                }
+            } else {
+                for (let row = 0; row < this.config.rows; row++) {
+                    for (let col = 0; col < this.config.cols; col++) {
+                        const isLight = (col + row) % 2 === 0;
+                        const color = isLight ? colorLight : colorDark;
+                        const quad = this.getCellQuad(col, row);
+                        const points = quad.map(p => ({ x: p.x, y: p.y }));
+                        graphics.fillStyle(color, alpha);
+                        graphics.fillPoints(points, true, true);
+                    }
                 }
             }
-            return graphics;
         }
 
-        for (let row = 0; row < this.config.rows; row++) {
-            for (let col = 0; col < this.config.cols; col++) {
-                const isLight = (col + row) % 2 === 0;
-                const color = isLight ? colorLight : colorDark;
-                const quad = this.getCellQuad(col, row);
-                const points = quad.map(p => ({ x: p.x, y: p.y }));
-                graphics.fillStyle(color);
-                graphics.fillPoints(points, true, true);
-            }
-        }
+        this.hoverGraphics = this.scene.add.graphics();
+        this.hoverGraphics.setDepth(0);
+
         return graphics;
+    }
+
+    /**
+     * Actualiza el borde de la celda bajo el cursor. Usa worldToNearestCell para que
+     * el hover siga mostrando la celda más cercana incluso cuando el cursor está fuera
+     * del tablero (p. ej. cerca del borde). Llama con coordenadas mundo en pointermove.
+     */
+    updateHover(worldX: number, worldY: number): void {
+        if (!this.hoverGraphics) return;
+
+        this.hoverGraphics.clear();
+
+        const cell = this.worldToNearestCell(worldX, worldY);
+
+        const quad = this.getCellQuad(cell.col, cell.row);
+        const points = quad.map(p => ({ x: p.x, y: p.y }));
+
+        this.hoverGraphics.lineStyle(2, 0xffffff, 0.9);
+        this.hoverGraphics.strokePoints(points, true, true);
+    }
+
+    /** Oculta el borde de hover (p. ej. cuando el cursor sale del canvas). */
+    clearHover(): void {
+        this.hoverGraphics?.clear();
     }
 }
 

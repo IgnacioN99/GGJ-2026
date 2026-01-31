@@ -28,7 +28,14 @@ export class Game extends Scene
 
         this.board = new Board(this, DEFAULT_BOARD_CONFIG);
 
-        this.board.drawBoard();
+        this.board.drawBoard(0xc4d4a0, 0x8bac0f, 0);
+
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            this.board.updateHover(pointer.worldX, pointer.worldY);
+        });
+        this.input.on('pointerout', () => {
+            this.board.clearHover();
+        });
 
         // Posición inicial del jugador: centro abajo del tablero
         const startCol = Math.floor(DEFAULT_BOARD_CONFIG.cols / 2);
