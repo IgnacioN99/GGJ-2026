@@ -20,6 +20,11 @@ export class Preloader extends Scene {
 
     this.load.audio("menu", "sounds/menu.ogg");
     this.load.audio("background", "sounds/background.ogg");
+    this.load.audio("sfx_manguera", "sounds/sfx/sfx_manguera.ogg");
+    this.load.audio("sfx_escoba", "sounds/sfx/sfx_escoba.ogg");
+    this.load.audio("sfx_breath", "sounds/sfx/sfx_breath.ogg");
+    this.load.audio("sfx_dog", "sounds/sfx/sfx_dog.ogg");
+    this.load.audio("sfx_door", "sounds/sfx/sfx_door.ogg");
     this.load.image("logo", "logo.png");
     this.load.image("menu", "fondos/menu.png");
     this.load.image(

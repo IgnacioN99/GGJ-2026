@@ -82,6 +82,9 @@ export class Game1 extends Scene {
   private enemySpawner: EnemySpawner;
   private level: GameLevel = 3;
   private backgroundSound: Phaser.Sound.BaseSound;
+  private escobaLoopSound: Phaser.Sound.BaseSound | null = null;
+  private mangueraLoopSound: Phaser.Sound.BaseSound | null = null;
+  private breathLoopSound: Phaser.Sound.BaseSound | null = null;
 
   constructor() {
     super("Game1");
@@ -198,6 +201,7 @@ export class Game1 extends Scene {
 
     this.wife.on(WifeEventTypes.Overwhelmed, () => {
       this.backgroundSound.stop();
+      this.sound.play("sfx_door");
       this.scene.start("GameOver", { won: false });
     });
 
@@ -228,6 +232,7 @@ export class Game1 extends Scene {
       const WIN_TRANSITION_DELAY_MS = 1000;
       this.time.delayedCall(WIN_TRANSITION_DELAY_MS, () => {
         this.backgroundSound.stop();
+        this.sound.play("sfx_dog");
         this.scene.start("GameOver", { won: true });
       });
     });
@@ -246,9 +251,19 @@ export class Game1 extends Scene {
     // Items equipables (escoba, manguera) con cooldown
     this.escoba = new Escoba();
     this.manguera = new Manguera();
+    this.escoba.on(ItemEventTypes.UseStarted, () => {
+      this.escobaLoopSound?.play();
+    });
+    this.escoba.on(ItemEventTypes.UseCompleted, () => {
+      this.escobaLoopSound?.stop();
+    });
     this.manguera.on(ItemEventTypes.UseStarted, () => {
+      this.mangueraLoopSound?.play();
       this.killEnemiesInMangueraLine();
       this.playAguaAttackAnimation();
+    });
+    this.manguera.on(ItemEventTypes.UseCompleted, () => {
+      this.mangueraLoopSound?.stop();
     });
     this.createItemUI();
 
@@ -261,10 +276,12 @@ export class Game1 extends Scene {
     this.events.on(PlayerEventTypes.GlobalCooldownStarted, () => {
       this.updateItemUI();
       this.board.clearHover();
+      this.breathLoopSound?.play();
     });
-    this.events.on(PlayerEventTypes.GlobalCooldownEnded, () =>
-      this.updateItemUI(),
-    );
+    this.events.on(PlayerEventTypes.GlobalCooldownEnded, () => {
+      this.updateItemUI();
+      this.breathLoopSound?.stop();
+    });
     this.events.on(PlayerEventTypes.Blocked, () => {
       this.board.clearHover();
     });
@@ -277,6 +294,10 @@ export class Game1 extends Scene {
     this.sound.stopAll();
     this.backgroundSound = this.sound.add("background", { loop: true });
     this.backgroundSound.play();
+    // Sonidos en bucle de escoba, manguera y respiración (cooldown global)
+    this.escobaLoopSound = this.sound.add("sfx_escoba", { loop: true });
+    this.mangueraLoopSound = this.sound.add("sfx_manguera", { loop: true });
+    this.breathLoopSound = this.sound.add("sfx_breath", { loop: true });
 
     // Volver al menú con ESC
     this.input.keyboard?.on(
