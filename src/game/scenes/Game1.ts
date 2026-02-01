@@ -32,6 +32,9 @@ const FONDOS_KEYS = ["fondo_01", "fondo_02", "fondo_03", "fondo_04"] as const;
 const FONDO_CROSSFADE_DURATION_MS = 2000;
 const FONDO_DEPTH = -2;
 
+/** Longitud del chorro de agua en número de celdas (cuánto avanza desde el jugador). */
+const AGUA_JET_LENGTH_CELLS = 2;
+
 /** Layout de la barra de items en la parte superior. */
 const ITEM_UI = {
   startX: 0, // Se calcula en create
@@ -68,6 +71,7 @@ export class Game1 extends Scene {
   private itemSlots: ItemSlot[] = []; // UI de la barra de items
   private enemySpawner: EnemySpawner;
   private level: GameLevel = 3;
+  private backgroundSound: Phaser.Sound.BaseSound;
 
   constructor() {
     super("Game1");
@@ -123,9 +127,29 @@ export class Game1 extends Scene {
     });
     this.anims.create({
       key: "player-manguera-use",
-      frames: [{ key: "player-manguera-0" }, { key: "player-manguera-1" }],
-      frameRate: 8,
+      frames: [
+        { key: "player-manguera-0" },
+        { key: "player-manguera-1" },
+      ],
+      frameRate: 4, // Velocidad baja para que el uso de la manguera se vea más pausado
       repeat: -1, // Bucle durante el uso; se detiene en onItemUseCompleted
+    });
+    // Animación del chorro de agua (ataque manguera en línea recta)
+    this.anims.create({
+      key: "agua-attack",
+      frames: [
+        { key: "agua-001" },
+        { key: "agua-002" },
+        { key: "agua-003" },
+        { key: "agua-004" },
+        { key: "agua-005" },
+        { key: "agua-006" },
+        { key: "agua-007" },
+        { key: "agua-008" },
+        { key: "agua-009" },
+      ],
+      frameRate: 18,
+      repeat: -1, // Bucle durante todo el ataque; se detiene al destruir el sprite
     });
 
     // Jugador: sprite que se mueve por celdas y usa items
@@ -138,29 +162,30 @@ export class Game1 extends Scene {
     // Wife: barra de estrés/sonido; si se sobrecarga → Game Over
     this.wife = new Wife(DEFAULT_MAX_SOUND, this);
     const wifeLifeDisplay = new WifeLifeDisplay(this, this.wife, {
-      x: 80,
-      y: 80,
       width: 200,
       height: 200,
     });
     this.add.existing(wifeLifeDisplay);
 
     this.wife.on(WifeEventTypes.Overwhelmed, () => {
+      this.backgroundSound.stop();
       this.scene.start("GameOver", { won: false });
     });
 
     // Timer de partida: al terminar → victoria
     this.gameTimer = new GameTimer();
     this.gameTimer.on(GameTimerEventTypes.Finished, () => {
+      this.backgroundSound.stop();
       this.scene.start("GameOver", { won: true });
     });
 
     // Items equipables (escoba, manguera) con cooldown
     this.escoba = new Escoba();
     this.manguera = new Manguera();
-    this.manguera.on(ItemEventTypes.UseStarted, () =>
-      this.killEnemiesInMangueraLine(),
-    );
+    this.manguera.on(ItemEventTypes.UseStarted, () => {
+      this.killEnemiesInMangueraLine();
+      this.playAguaAttackAnimation();
+    });
     this.createItemUI();
 
     // Suscripción a eventos del jugador para actualizar barra de items y hover
@@ -183,6 +208,21 @@ export class Game1 extends Scene {
 
     // Enemy spawner: genera enemigos que avanzan por el tablero
     this.enemySpawner = new EnemySpawner(this.board);
+
+    // Música de fondo (igual que Game2: parar otros sonidos y reproducir en loop)
+    this.sound.stopAll();
+    this.backgroundSound = this.sound.add("background", { loop: true });
+    this.backgroundSound.play();
+
+    // Volver al menú con ESC
+    this.input.keyboard?.on(
+      "keydown-ESC",
+      () => {
+        this.backgroundSound.stop();
+        this.scene.start("MainMenu");
+      },
+      this
+    );
 
     // Hook E2E (Playwright): expone la escena en window.__gameScene para tests
     if (typeof window !== "undefined") {
@@ -210,12 +250,6 @@ export class Game1 extends Scene {
 
       const { x, y } = this.board.cellToWorld(cell.col, cell.row);
       this.player.moveTo(x, y);
-    });
-
-    // Tecla K: debug para aumentar sonido de la Wife
-    this.input.keyboard?.on("keydown-K", () => {
-      this.wife.addSound(10);
-      console.log("Wife current sound:", this.wife.currentSound);
     });
   }
 
@@ -493,7 +527,6 @@ export class Game1 extends Scene {
       cells.push({ col, row: playerRow });
     }
     const toKill = this.enemySpawner.getEnemiesInCells(cells);
-    console.log("toKill", toKill);
     for (const enemy of toKill) {
       this.events.emit(
         WifeEventTypes.SoundReduced,
@@ -501,6 +534,52 @@ export class Game1 extends Scene {
       );
     }
     this.enemySpawner.removeEnemies(toKill);
+  }
+
+  /**
+   * Reproduce la animación del chorro de agua en línea recta desde adelante del jugador
+   * hasta el borde derecho del tablero (misma fila que el jugador).
+   * Usa la celda delante del jugador para el origen, así funciona igual en cualquier posición del tablero (y con perspectiva).
+   */
+  private playAguaAttackAnimation(): void {
+    const bounds = this.board.getBoardBounds();
+    const playerX = this.player.getX();
+    const playerY = this.player.getY();
+    // Usar worldToNearestCell para ser estables cuando el jugador está en el borde de una celda (evita que la 1ª vez salga atrás)
+    const playerCell =
+      this.board.worldToCell(playerX, playerY) ??
+      this.board.worldToNearestCell(playerX, playerY);
+    const frontCol = Math.min(
+      playerCell.col + 1,
+      this.board.getTotalCols() - 1
+    );
+    const { x: cellFrontX, y: startY } = this.board.cellToWorld(
+      frontCol,
+      playerCell.row
+    );
+    // Nunca iniciar detrás del jugador: si la celda queda atrás (p. ej. 1ª vez al llegar), usar mínimo adelante
+    const minOffsetAdelante = bounds.cellWidth * 0.5;
+    const startX = Math.max(cellFrontX, playerX + minOffsetAdelante);
+    const offsetArriba = bounds.cellHeight * 0.5;
+    const startYFinal = startY - offsetArriba;
+    const jetDistance = AGUA_JET_LENGTH_CELLS * bounds.cellWidth;
+    const endX = Math.min(startX + jetDistance, bounds.maxX);
+
+    const aguaSprite = this.add.sprite(startX, startYFinal, "agua-001");
+    aguaSprite.setOrigin(0.5, 0.5);
+    aguaSprite.setDepth(5);
+
+    aguaSprite.play("agua-attack");
+
+    this.tweens.add({
+      targets: aguaSprite,
+      x: endX,
+      duration: this.manguera.useDurationMs,
+      ease: "Linear",
+      onComplete: () => {
+        aguaSprite.destroy();
+      },
+    });
   }
 
   /**

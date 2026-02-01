@@ -35,7 +35,7 @@ export class MainMenu extends Scene
         const game1Btn = this.add.text(512, 540, 'Game 1', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
         const game2Btn = this.add.text(512, 600, 'Game 2', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-        game1Btn.on('pointerdown', () => this.scene.start('Game'));
+        game1Btn.on('pointerdown', () => this.scene.start('Game1'));
         game2Btn.on('pointerdown', () => this.scene.start('Game2'));
     }
 }

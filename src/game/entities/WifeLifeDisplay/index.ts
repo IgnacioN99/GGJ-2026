@@ -6,12 +6,14 @@ import {
 } from '../Wife';
 import type { WifeLifeDisplayConfig } from './type';
 
+/** Margen para que la imagen no quede recortada por el borde de la pantalla. */
+
 const DEFAULT_CONFIG: Required<WifeLifeDisplayConfig> = {
-  x: 80,
-  y: 80,
-  width: 100,
-  height: 100,
-  depth: 1
+  x: 0,
+  y: -30,
+  width: 200,
+  height: 200,
+  depth: 1000
 };
 
 /**
@@ -32,7 +34,7 @@ export class WifeLifeDisplay extends Phaser.GameObjects.Image {
     super(scene, x, y, WIFE_LIFE_IMAGE_KEYS[lifeIndex - 1]);
 
     this.wife = wife;
-    this.setOrigin(0, 0).setDisplaySize(width, height).setDepth(depth);
+    this.setOrigin(0, 0).setDisplaySize(width, height).setDepth(depth).setPosition(x, y);
 
     this.updateTexture = (): void => {
       const idx = getWifeLifeImageIndex(this.wife.currentSound, this.wife.maxSound);

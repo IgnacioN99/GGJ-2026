@@ -11,7 +11,7 @@ export interface EscobaConfig extends ItemConfig {
 
 /** Configuración por defecto de la escoba */
 export const DEFAULT_ESCOBA_CONFIG: EscobaConfig = {
-  useDurationMs: 2000, // 2 segundos barriendo
+  useDurationMs: 6000, // 2 segundos barriendo
   cooldownMs: 2500, // 2.5 segundos de cooldown (no bloquea equipar otros items)
   blocksItems: false,
 };
