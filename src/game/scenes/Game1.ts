@@ -1,180 +1,563 @@
-import { Scene } from 'phaser';
+import { Scene } from "phaser";
 import entities, {
   Wife,
   DEFAULT_MAX_SOUND,
   WifeEventTypes,
+  soundAdded,
   soundReduced,
-  WifeLifeDisplay
-} from '../entities';
-import { Board, type Cell } from '../Board';
-import { getBoardConfigForLevel } from '../Board/type';
-import { GameTimer, GameTimerEventTypes } from '../GameTimer';
+  WifeLifeDisplay,
+  Escoba,
+  Manguera,
+  PlayerEventTypes,
+  ItemEventTypes,
+  ItemTypes,
+  type BaseItem,
+} from "../entities";
+import { Board, type Cell } from "../Board";
+import { GameLevel, getBoardConfigForLevel } from "../Board/type";
+import { ENEMY_MAX_SOUND_CONTRIBUTION } from "../BaseEnemy";
+import { EnemySpawner } from "../enemySpawner";
+import { GameTimer, GameTimerEventTypes } from "../GameTimer";
 
-/** Evento emitido cuando el jugador ataca en una celda del tablero */
-export const EVENT_ATTACK_AT_CELL = 'attackAtCell';
+// ─── Constantes ─────────────────────────────────────────────────────────────
 
-/** Claves de fondos por tono (mismo fondo, distintos tonos). Se cambian por tiempo con crossfade. */
-const FONDOS_KEYS = ['fondo_01', 'fondo_02', 'fondo_03', 'fondo_04'] as const;
+/** Evento emitido cuando el jugador ataca en una celda (payload: Cell). Al escucharlo se matan enemigos en esa celda y la de adelante. */
+export const EVENT_ATTACK_AT_CELL = "attackAtCell";
+
+/** X donde los enemigos dejan de avanzar (cerca de la base). Debe coincidir con BaseEnemy.move(). */
+const BOARD_END_X = 270;
+
+/** Claves de fondos (mismo fondo, distintos tonos). Se rotan por tiempo con crossfade. */
+const FONDOS_KEYS = ["fondo_01", "fondo_02", "fondo_03", "fondo_04"] as const;
 const FONDO_CROSSFADE_DURATION_MS = 2000;
 const FONDO_DEPTH = -2;
 
-export class Game1 extends Scene
-{
-    camera: Phaser.Cameras.Scene2D.Camera;
-    player: InstanceType<typeof entities.player>;
-    private board: Board;
-    private wife: Wife;
-    private gameTimer: GameTimer;
-    /** Dos capas de fondo para crossfade por opacidad. */
-    private fondoLayerA: Phaser.GameObjects.Image;
-    private fondoLayerB: Phaser.GameObjects.Image;
-    /** Índice del fondo actualmente visible (0..3). */
-    private fondoIndex = 0;
-    /** Si hay una transición de fondo en curso. */
-    private fondoTransitioning = false;
+/** Layout de la barra de items en la parte superior. */
+const ITEM_UI = {
+  startX: 0, // Se calcula en create
+  startY: 20,
+  size: 60,
+  gap: 15,
+  disabledTint: 0x666666, // Gris cuando el item no está disponible
+};
 
-    constructor ()
-    {
-        super('Game1');
+// ─── Tipos ──────────────────────────────────────────────────────────────────
+
+/** Representa un slot de la barra de items: item + su representación gráfica en pantalla. */
+interface ItemSlot {
+  item: BaseItem;
+  graphics: Phaser.GameObjects.Rectangle;
+  icon?: Phaser.GameObjects.Image;
+  isDisabled: boolean;
+}
+
+// ─── Escena principal del juego ─────────────────────────────────────────────
+
+export class Game1 extends Scene {
+  camera: Phaser.Cameras.Scene2D.Camera;
+  player: InstanceType<typeof entities.player>; // Sprite del jugador, movimiento y items
+  private board: Board; // Grid de celdas
+  private wife: Wife; // Barra de estrés/sonido
+  private gameTimer: GameTimer; // Duración de la partida
+  private fondoLayerA: Phaser.GameObjects.Image; // Capas para crossfade de fondos
+  private fondoLayerB: Phaser.GameObjects.Image;
+  private fondoIndex = 0;
+  private fondoTransitioning = false;
+  private escoba: Escoba; // Items equipables
+  private manguera: Manguera;
+  private itemSlots: ItemSlot[] = []; // UI de la barra de items
+  private enemySpawner: EnemySpawner;
+  private level: GameLevel = 3;
+
+  constructor() {
+    super("Game1");
+  }
+
+  /** Inicializa la escena: tablero, jugador, wife, timer, items, input. */
+  create() {
+    this.fondoIndex = 0;
+    this.fondoTransitioning = false;
+
+    const boardConfig = getBoardConfigForLevel(1);
+
+    // Cámara y color de fondo de la escena
+    this.camera = this.cameras.main;
+    this.camera.setBackgroundColor(0x5a3a2a);
+
+    // Dos capas de imagen para crossfade según el tiempo de partida
+    const w = this.scale.width;
+    const h = this.scale.height;
+    this.fondoLayerA = this.add
+      .image(w / 2, h / 2, FONDOS_KEYS[0])
+      .setDisplaySize(w, h)
+      .setDepth(FONDO_DEPTH)
+      .setAlpha(1);
+    this.fondoLayerB = this.add
+      .image(w / 2, h / 2, FONDOS_KEYS[1])
+      .setDisplaySize(w, h)
+      .setDepth(FONDO_DEPTH - 0.1)
+      .setAlpha(0);
+
+    // Tablero de celdas donde se mueve el jugador y ataca
+    this.board = new Board(this, boardConfig);
+    this.board.drawBoard(0xc4d4a0, 0x8bac0f, 0);
+
+    // Hover del cursor sobre celdas del tablero
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (this.player?.canMove) {
+        this.board.updateHover(pointer.worldX, pointer.worldY);
+      } else {
+        this.board.clearHover();
+      }
+    });
+    this.input.on("pointerout", () => {
+      this.board.clearHover();
+    });
+
+    // Animaciones del jugador con items: se repiten hasta que termine el uso del item (se detienen en restoreDefaultSprite)
+    this.anims.create({
+      key: "player-escoba-use",
+      frames: [
+        { key: "player-escoba-0" },
+        { key: "player-escoba-1" },
+      ],
+      frameRate: 8,
+      repeat: -1, // Bucle durante el uso; se detiene en onItemUseCompleted
+    });
+    this.anims.create({
+      key: "player-manguera-use",
+      frames: [
+        { key: "player-manguera-0" },
+        { key: "player-manguera-1" },
+      ],
+      frameRate: 8,
+      repeat: -1, // Bucle durante el uso; se detiene en onItemUseCompleted
+    });
+
+    // Jugador: sprite que se mueve por celdas y usa items
+    const startCol = Math.floor(boardConfig.cols / 2);
+    const startRow = boardConfig.rows - 1;
+    const { x: startX, y: startY } = this.board.cellToWorld(startCol, startRow);
+    this.player = new entities.player(this, startX, startY);
+    this.add.existing(this.player);
+
+    // Wife: barra de estrés/sonido; si se sobrecarga → Game Over
+    this.wife = new Wife(DEFAULT_MAX_SOUND, this);
+    const wifeLifeDisplay = new WifeLifeDisplay(this, this.wife, {
+      x: 80,
+      y: 80,
+      width: 200,
+      height: 200,
+    });
+    this.add.existing(wifeLifeDisplay);
+
+    this.wife.on(WifeEventTypes.Overwhelmed, () => {
+      this.scene.start("GameOver", { won: false });
+    });
+
+    // Timer de partida: al terminar → victoria
+    this.gameTimer = new GameTimer();
+    this.gameTimer.on(GameTimerEventTypes.Finished, () => {
+      this.scene.start("GameOver", { won: true });
+    });
+
+    // Items equipables (escoba, manguera) con cooldown
+    this.escoba = new Escoba();
+    this.manguera = new Manguera();
+    this.manguera.on(ItemEventTypes.UseStarted, () =>
+      this.killEnemiesInMangueraLine()
+    );
+    this.createItemUI();
+
+    // Suscripción a eventos del jugador para actualizar barra de items y hover
+    this.events.on(PlayerEventTypes.ItemEquipped, () => this.updateItemUI());
+    this.events.on(PlayerEventTypes.ItemUnequipped, () => {
+      this.updateItemUI();
+      this.board.clearHover();
+    });
+    this.events.on(PlayerEventTypes.GlobalCooldownStarted, () => {
+      this.updateItemUI();
+      this.board.clearHover();
+    });
+    this.events.on(PlayerEventTypes.GlobalCooldownEnded, () =>
+      this.updateItemUI()
+    );
+    this.events.on(PlayerEventTypes.Blocked, () => {
+      this.board.clearHover();
+    });
+    // La escoba mata enemigos continuamente durante el uso (en update)
+
+    // Enemy spawner: genera enemigos que avanzan por el tablero
+    this.enemySpawner = new EnemySpawner(this.board);
+
+    // Hook E2E (Playwright): expone la escena en window.__gameScene para tests
+    if (typeof window !== "undefined") {
+      (window as unknown as { __gameScene?: Game1 }).__gameScene = this;
     }
 
-    create ()
-    {
-        this.fondoIndex = 0;
-        this.fondoTransitioning = false;
+    // Click: equipar item si se clickea la barra, sino mover jugador y atacar en celda
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      // Verificar si el click fue en un item slot
+      const clickedSlot = this.getClickedItemSlot(pointer.x, pointer.y);
+      if (clickedSlot) {
+        this.onItemSlotClicked(clickedSlot);
+        return;
+      }
 
-        const boardConfig = getBoardConfigForLevel(1);
+      // Si el player no puede moverse, ignorar clicks en el tablero
+      if (!this.player.canMove) {
+        console.log("[Game1] Player no puede moverse, ignorando click");
+        return;
+      }
 
-        this.camera = this.cameras.main;
-        this.camera.setBackgroundColor(0x5a3a2a);
+      const cell =
+        this.board.worldToCell(pointer.worldX, pointer.worldY) ??
+        this.board.worldToNearestCell(pointer.worldX, pointer.worldY);
 
-        const w = this.scale.width;
-        const h = this.scale.height;
-        this.fondoLayerA = this.add.image(w / 2, h / 2, FONDOS_KEYS[0]).setDisplaySize(w, h).setDepth(FONDO_DEPTH).setAlpha(1);
-        this.fondoLayerB = this.add.image(w / 2, h / 2, FONDOS_KEYS[1]).setDisplaySize(w, h).setDepth(FONDO_DEPTH - 0.1).setAlpha(0);
+      const { x, y } = this.board.cellToWorld(cell.col, cell.row);
+      this.player.moveTo(x, y);
+    });
 
-        this.board = new Board(this, boardConfig);
+    // Tecla K: debug para aumentar sonido de la Wife
+    this.input.keyboard?.on("keydown-K", () => {
+      this.wife.addSound(10);
+      console.log("Wife current sound:", this.wife.currentSound);
+    });
+  }
 
-        this.board.drawBoard(0xc4d4a0, 0x8bac0f, 0);
+  /** Dibuja la barra de items (escoba, manguera) arriba a la derecha con iconos clicables. */
+  private createItemUI(): void {
+    const w = this.scale.width;
+    const totalItems = 2;
+    const totalWidth = totalItems * ITEM_UI.size + (totalItems - 1) * ITEM_UI.gap;
+    ITEM_UI.startX = w - totalWidth - 20;
 
-        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-            this.board.updateHover(pointer.worldX, pointer.worldY);
-        });
-        this.input.on('pointerout', () => {
-            this.board.clearHover();
-        });
+    // Slot Escoba: rectángulo invisible + icono
+    const escobaX = ITEM_UI.startX;
+    const escobaCenterX = escobaX + ITEM_UI.size / 2;
+    const escobaCenterY = ITEM_UI.startY + ITEM_UI.size / 2;
+    const escobaGraphics = this.add
+      .rectangle(
+        escobaCenterX,
+        escobaCenterY,
+        ITEM_UI.size,
+        ITEM_UI.size,
+        0x000000,
+        0 // Transparente
+      )
+      .setStrokeStyle(0, 0x000000) // Sin borde
+      .setInteractive({ useHandCursor: true })
+      .setDepth(100);
 
-        // Posición inicial del jugador: centro abajo del tablero
-        const startCol = Math.floor(boardConfig.cols / 2);
-        const startRow = boardConfig.rows - 1;
-        const { x: startX, y: startY } = this.board.cellToWorld(startCol, startRow);
+    const escobaIcon = this.add
+      .image(escobaCenterX, escobaCenterY, "items/escoba")
+      .setDisplaySize(ITEM_UI.size + 10, ITEM_UI.size + 10)
+      .setOrigin(0.5)
+      .setDepth(101);
 
-        this.player = new entities.player(this, startX, startY);
-        this.add.existing(this.player);
+    this.itemSlots.push({
+      item: this.escoba,
+      graphics: escobaGraphics,
+      icon: escobaIcon,
+      isDisabled: false,
+    });
 
-        this.wife = new Wife(DEFAULT_MAX_SOUND, this);
-        const wifeLifeDisplay = new WifeLifeDisplay(this, this.wife, {
-            x: 80,
-            y: 80,
-            width: 200,
-            height:200
-        });
-        this.add.existing(wifeLifeDisplay);
+    // Slot Manguera: rectángulo invisible + icono
+    const mangueraX = ITEM_UI.startX + ITEM_UI.size + ITEM_UI.gap;
+    const mangueraCenterX = mangueraX + ITEM_UI.size / 2;
+    const mangueraCenterY = ITEM_UI.startY + ITEM_UI.size / 2;
+    const mangueraGraphics = this.add
+      .rectangle(
+        mangueraCenterX,
+        mangueraCenterY,
+        ITEM_UI.size,
+        ITEM_UI.size,
+        0x000000,
+        0 // Transparente
+      )
+      .setStrokeStyle(0, 0x000000) // Sin borde
+      .setInteractive({ useHandCursor: true })
+      .setDepth(100);
 
-        // Evento emitido cuando la Wife está abrumada
-        this.wife.on(WifeEventTypes.Overwhelmed, () => {
-            this.scene.start('GameOver', { won: false });
-        });
+    const mangueraIcon = this.add
+      .image(mangueraCenterX, mangueraCenterY, "items/manguera")
+      .setDisplaySize(ITEM_UI.size + 10, ITEM_UI.size + 10)
+      .setOrigin(0.5)
+      .setDepth(101);
 
-        this.gameTimer = new GameTimer();
-        this.gameTimer.on(GameTimerEventTypes.Finished, () => {
-            this.scene.start('GameOver', { won: true });
-        });
+    this.itemSlots.push({
+      item: this.manguera,
+      graphics: mangueraGraphics,
+      icon: mangueraIcon,
+      isDisabled: false,
+    });
 
+    this.updateItemUI();
+  }
 
+  /** Devuelve el slot sobre el que se hizo click, o null si no es un slot. */
+  private getClickedItemSlot(x: number, y: number): ItemSlot | null {
+    for (const slot of this.itemSlots) {
+      const bounds = slot.graphics.getBounds();
+      if (bounds.contains(x, y)) {
+        return slot;
+      }
+    }
+    return null;
+  }
 
-        // Expuesto para E2E (Playwright): leer posición del jugador y comprobar que está en celdas del tablero
-        if (typeof window !== 'undefined') {
-            (window as unknown as { __gameScene?: Game1 }).__gameScene = this;
+  /** Equipa el item del slot si está disponible y el jugador puede equipar. */
+  private onItemSlotClicked(slot: ItemSlot): void {
+    if (slot.isDisabled) {
+      console.log("[Game1] Item no disponible");
+      return;
+    }
+
+    if (!this.player.canEquipItem) {
+      console.log("[Game1] Player no puede equipar items");
+      return;
+    }
+
+    const success = this.player.equipItem(slot.item);
+    if (success) {
+      console.log("[Game1] Item equipado:", slot.item.itemType);
+      this.updateItemUI();
+    }
+  }
+
+  /** Refleja equipado/cooldown/disabled en bordes y tint de los iconos. */
+  private updateItemUI(): void {
+    const canEquip = this.player.canEquipItem;
+    const equippedItem = this.player.equippedItem;
+
+    for (let i = 0; i < this.itemSlots.length; i++) {
+      const slot = this.itemSlots[i];
+      const isEquipped = equippedItem === slot.item;
+      const isOnCooldown = slot.item.isOnCooldown;
+
+      // Determinar si está disabled
+      slot.isDisabled = !canEquip || isOnCooldown;
+
+      if (isEquipped) {
+        slot.graphics.setStrokeStyle(4, 0x00ff00); // Borde verde = equipado
+        slot.graphics.setFillStyle(0x000000, 0);
+        slot.graphics.setAlpha(1);
+        if (slot.icon) {
+          slot.icon.setAlpha(1);
+          slot.icon.clearTint();
         }
+      } else if (slot.isDisabled) {
+        slot.graphics.setStrokeStyle(0, 0x000000);
+        slot.graphics.setFillStyle(0x000000, 0);
+        slot.graphics.setAlpha(0.5);
+        if (slot.icon) {
+          slot.icon.setAlpha(0.5);
+          slot.icon.setTint(ITEM_UI.disabledTint);
+        }
+      } else {
+        slot.graphics.setStrokeStyle(0, 0x000000);
+        slot.graphics.setFillStyle(0x000000, 0);
+        slot.graphics.setAlpha(1);
+        if (slot.icon) {
+          slot.icon.setAlpha(1);
+          slot.icon.clearTint();
+        }
+      }
+    }
+  }
 
-        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            const cell = this.board.worldToCell(pointer.worldX, pointer.worldY)
-                ?? this.board.worldToNearestCell(pointer.worldX, pointer.worldY);
+  /** Loop de Phaser: actualiza timer, fondos, cooldowns de items, spawner y UI. */
+  update(_time: number, delta: number): void {
+    this.gameTimer.update(delta);
+    this.updateFondoByTime();
 
-            const { x, y } = this.board.cellToWorld(cell.col, cell.row);
-            this.player.moveTo(x, y);
+    // Enemy spawner: spawn, colisiones y movimiento
+    this.enemySpawner.spawnEnemyOnScreen(delta, this, this.level);
+    this.enemySpawner.checkPlayerCollisions(this, this.player);
+    this.enemySpawner.moveEnemies(this);
+    this.updateEnemyWifeSound();
 
-            // Ataque en esa posición (celda del tablero)
-            this.attackAtCell(cell);
-        });
+    // Si no hay enemigos, el jugador puede moverse sin item
+    const hasNoEnemies =
+      this.enemySpawner.getSpawnedEnemies().filter((e) => e.sprite?.active).length === 0;
+    this.player.setAllowMoveWithoutItem(hasNoEnemies);
 
-
-        this.input.keyboard?.on('keydown-K', () => {
-            this.wife.addSound(10);
-            console.log('Wife current sound:', this.wife.currentSound);
-        });
+    // Durante el uso de la escoba, matar continuamente todos los enemigos delante del jugador
+    if (
+      this.escoba.isUsing &&
+      this.player.equippedItem?.itemType === ItemTypes.ESCOBA
+    ) {
+      this.killEnemiesInEscobaSweep();
     }
 
-    update(_time: number, delta: number): void {
-        console.log('GameTimer elapsedSeconds:', this.gameTimer.elapsedSeconds);
-        this.gameTimer.update(delta);
-        this.updateFondoByTime();
+    // Cooldown de items no equipados (el equipado lo actualiza el player)
+    for (const slot of this.itemSlots) {
+      if (slot.item !== this.player.equippedItem) {
+        slot.item.update(delta);
+      }
     }
 
-    /** Cambia de fondo por tiempo: a 25%, 50% y 75% de la partida, crossfade al siguiente tono. */
-    private updateFondoByTime(): void {
-        if (this.fondoTransitioning || this.fondoIndex >= FONDOS_KEYS.length - 1) return;
-        const { elapsedSeconds, durationSeconds } = this.gameTimer.getCurrentTime();
-        const progress = elapsedSeconds / durationSeconds;
-        const nextThreshold = (this.fondoIndex + 1) / (FONDOS_KEYS.length);
-        if (progress < nextThreshold) return;
+    this.updateItemUI();
+  }
 
-        this.fondoTransitioning = true;
-        const nextIndex = this.fondoIndex + 1;
-        const incoming = this.fondoLayerB;
-        const outgoing = this.fondoLayerA;
-        incoming.setTexture(FONDOS_KEYS[nextIndex]).setAlpha(0);
+  /** A 25%, 50%, 75% del tiempo de partida hace crossfade al siguiente tono de fondo. */
+  private updateFondoByTime(): void {
+    if (this.fondoTransitioning || this.fondoIndex >= FONDOS_KEYS.length - 1)
+      return;
+    const { elapsedSeconds, durationSeconds } = this.gameTimer.getCurrentTime();
+    const progress = elapsedSeconds / durationSeconds;
+    const nextThreshold = (this.fondoIndex + 1) / FONDOS_KEYS.length;
+    if (progress < nextThreshold) return;
 
-        this.tweens.add({
-            targets: outgoing,
-            alpha: 0,
-            duration: FONDO_CROSSFADE_DURATION_MS,
-            ease: 'Linear'
-        });
-        this.tweens.add({
-            targets: incoming,
-            alpha: 1,
-            duration: FONDO_CROSSFADE_DURATION_MS,
-            ease: 'Linear',
-            onComplete: () => {
-                this.fondoIndex = nextIndex;
-                this.fondoTransitioning = false;
-                outgoing.setAlpha(0);
-                incoming.setAlpha(1);
-                this.fondoLayerA = incoming;
-                this.fondoLayerB = outgoing;
-                this.fondoLayerA.setDepth(FONDO_DEPTH);
-                this.fondoLayerB.setDepth(FONDO_DEPTH - 0.1);
-            }
-        });
+    this.fondoTransitioning = true;
+    const nextIndex = this.fondoIndex + 1;
+    const incoming = this.fondoLayerB;
+    const outgoing = this.fondoLayerA;
+    incoming.setTexture(FONDOS_KEYS[nextIndex]).setAlpha(0);
+
+    this.tweens.add({
+      targets: outgoing,
+      alpha: 0,
+      duration: FONDO_CROSSFADE_DURATION_MS,
+      ease: "Linear",
+    });
+    this.tweens.add({
+      targets: incoming,
+      alpha: 1,
+      duration: FONDO_CROSSFADE_DURATION_MS,
+      ease: "Linear",
+      onComplete: () => {
+        this.fondoIndex = nextIndex;
+        this.fondoTransitioning = false;
+        outgoing.setAlpha(0);
+        incoming.setAlpha(1);
+        this.fondoLayerA = incoming;
+        this.fondoLayerB = outgoing;
+        this.fondoLayerA.setDepth(FONDO_DEPTH);
+        this.fondoLayerB.setDepth(FONDO_DEPTH - 0.1);
+      },
+    });
+  }
+
+  /**
+   * Actualiza el sonido de la Wife según la distancia de cada enemigo al fondo del tablero.
+   * Cada enemigo aporta 1 al spawn y hasta ENEMY_MAX_SOUND_CONTRIBUTION al acercarse;
+   * el valor reemplaza al anterior (no se acumula 1+2+3...).
+   */
+  private updateEnemyWifeSound(): void {
+    const enemies = this.enemySpawner.getSpawnedEnemies();
+    const range = Math.max(1, this.scale.width - BOARD_END_X);
+
+    for (const enemy of enemies) {
+      if (!enemy.sprite?.active) continue;
+
+      if (enemy.soundContribution === 0) {
+        this.events.emit(WifeEventTypes.SoundAdded, soundAdded(1));
+        enemy.soundContribution = 1;
+        continue;
+      }
+
+      const progress = Math.max(
+        0,
+        Math.min(1, (enemy.spawnX - enemy.sprite.x) / range)
+      );
+      const contribution = Math.max(
+        1,
+        Math.min(
+          ENEMY_MAX_SOUND_CONTRIBUTION,
+          Math.round(1 + progress * (ENEMY_MAX_SOUND_CONTRIBUTION - 1))
+        )
+      );
+
+      if (contribution === enemy.soundContribution) continue;
+
+      const delta = contribution - enemy.soundContribution;
+      enemy.soundContribution = contribution;
+      if (delta > 0) {
+        this.events.emit(WifeEventTypes.SoundAdded, soundAdded(delta));
+      } else {
+        this.events.emit(WifeEventTypes.SoundReduced, soundReduced(-delta));
+      }
     }
+  }
 
-    /** Ejecuta el ataque en la celda indicada (puedes extender con daño, efectos, etc.) */
-    attackAtCell(cell: Cell): void {
-        this.events.emit(EVENT_ATTACK_AT_CELL, cell);
-        // reemplazar por la cantidad de sonido que se reduce por el ataque
-        this.events.emit(WifeEventTypes.SoundReduced, soundReduced(10));
-        // Aquí puedes añadir lógica de daño, animación, sonido, etc.
+  /**
+   * Mata enemigos al usar la manguera: en la celda donde se para el jugador y en línea recta
+   * el resto de la fila (misma fila) hasta el borde derecho del tablero. Solo dentro del tablero.
+   * Emite SoundReduced por cada uno.
+   */
+  killEnemiesInMangueraLine(): void {
+    const playerCell =
+      this.board.worldToCell(this.player.getX(), this.player.getY()) ??
+      this.board.worldToNearestCell(this.player.getX(), this.player.getY());
+    const { col: playerCol, row: playerRow } = playerCell;
+    const totalCols = this.board.getTotalCols();
+    const cells: Cell[] = [];
+    for (let col = playerCol; col < totalCols; col++) {
+      cells.push({ col, row: playerRow });
     }
+    const toKill = this.enemySpawner.getEnemiesInCells(cells);
+    console.log("toKill", toKill);
+    for (const enemy of toKill) {
+      this.events.emit(
+        WifeEventTypes.SoundReduced,
+        soundReduced(enemy.soundContribution)
+      );
+    }
+    this.enemySpawner.removeEnemies(toKill);
+  }
 
-    /** Centro de una celda en coordenadas mundo (para E2E: comprobar que el jugador queda en la celda) */
-    getCellCenter(col: number, row: number): { x: number; y: number } {
-        return this.board.cellToWorld(col, row);
+  /**
+   * Mata enemigos durante el barrido de la escoba: la celda donde está el jugador
+   * y la celda de adelante (col+1). Se ejecuta cada frame mientras dura el uso,
+   * para que enemigos que lleguen durante la animación también mueran.
+   */
+  killEnemiesInEscobaSweep(): void {
+    const playerCell =
+      this.board.worldToCell(this.player.getX(), this.player.getY()) ??
+      this.board.worldToNearestCell(this.player.getX(), this.player.getY());
+    const cells: Cell[] = [
+      playerCell,
+      { col: playerCell.col + 1, row: playerCell.row },
+    ];
+    const toKill = this.enemySpawner.getEnemiesInCells(cells);
+    for (const enemy of toKill) {
+      this.events.emit(
+        WifeEventTypes.SoundReduced,
+        soundReduced(enemy.soundContribution)
+      );
     }
+    this.enemySpawner.removeEnemies(toKill);
+  }
 
-    /** Tiempo actual de partida (para UI o pruebas). */
-    getGameTimer(): GameTimer {
-        return this.gameTimer;
+  /**
+   * Mata los enemigos en el área de ataque (celdas indicadas + enemigos a 1 bloque del borde del tablero)
+   * solo si el jugador tiene la escoba equipada. Emite SoundReduced por cada uno y los quita del spawner.
+   */
+  killEnemiesInTargetArea(cells: Cell[]): void {
+    if (
+      !this.player.hasEquippedItem ||
+      this.player.equippedItem?.itemType !== ItemTypes.ESCOBA
+    ) {
+      return;
     }
+    const toKill = this.enemySpawner.getEnemiesInCells(cells);
+    for (const enemy of toKill) {
+      this.events.emit(
+        WifeEventTypes.SoundReduced,
+        soundReduced(enemy.soundContribution)
+      );
+    }
+    this.enemySpawner.removeEnemies(toKill);
+  }
+
+  /** Emite evento de ataque en celda (solo debe llamarse con escoba equipada); el listener mata enemigos en la celda de adelante. */
+  attackAtCell(cell: Cell): void {
+    this.events.emit(EVENT_ATTACK_AT_CELL, cell);
+  }
+
+  /** Devuelve el timer de partida (para UI o tests E2E). */
+  getGameTimer(): GameTimer {
+    return this.gameTimer;
+  }
 }

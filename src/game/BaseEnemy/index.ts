@@ -1,6 +1,9 @@
 import type Player from "../entities/Player";
 import { EnemyTypes } from "./types";
 
+/** Contribución máxima de sonido por enemigo (1 al spawn, hasta este valor al acercarse). */
+export const ENEMY_MAX_SOUND_CONTRIBUTION = 10;
+
 export abstract class BaseEnemy {
   speed: number = 0.5;
   type: EnemyTypes;
@@ -10,6 +13,10 @@ export abstract class BaseEnemy {
   height: number = 100;
   life: number = 100;
   canMove: boolean = true;
+  /** Posición X donde spawneó (origen del tablero). */
+  spawnX: number = 0;
+  /** Contribución actual al sonido de la Wife (1..ENEMY_MAX_SOUND_CONTRIBUTION). 0 = aún no registrado. */
+  soundContribution: number = 0;
 
   move(): void {
     const nextX = this.calculateNextX();
@@ -29,6 +36,7 @@ export abstract class BaseEnemy {
   }
 
   setSprite(x: number, y: number, scene: Phaser.Scene): void {
+    this.spawnX = x;
     this.sprite = scene.add.image(x, y, this.spritePath);
     this.sprite.setOrigin(0.5, 1);
     this.sprite.displayWidth = this.width;

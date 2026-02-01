@@ -155,18 +155,84 @@ export class EnemySpawner {
     });
   }
 
-  /** Checks overlap between player and spawned enemies; calls onCollisionWithPlayer when overlapping. */
-  public checkPlayerCollisions(player: Player): void {
+  /**
+   * Devuelve los enemigos cuya celda está en la lista de celdas.
+   * Incluye celdas fuera del tablero (col >= cols o row >= rows): usa bounds del
+   * tablero para considerar "un bloque" y detectar enemigos a 1 bloque del borde.
+   */
+  public getEnemiesInCells(cells: { col: number; row: number }[]): BaseEnemy[] {
+    const toKillSet = new Set<BaseEnemy>();
+    const bounds = this.board.getBoardBounds();
+    const cols = this.board.getTotalCols();
+    const rows = this.board.getTotalRows();
+
+    for (const enemy of this.spawnedEnemies) {
+      if (!enemy.sprite?.active) continue;
+      const ex = enemy.sprite.x;
+      const ey = enemy.sprite.y;
+
+      const enemyCell = this.board.worldToCell(ex, ey);
+      if (enemyCell) {
+        const inCell = cells.some(
+          (c) => c.col === enemyCell.col && c.row === enemyCell.row
+        );
+        if (inCell) {
+          toKillSet.add(enemy);
+          continue;
+        }
+      }
+
+      for (const c of cells) {
+        const outOfBounds =
+          c.col < 0 ||
+          c.row < 0 ||
+          c.col >= cols ||
+          c.row >= rows;
+        if (outOfBounds) {
+          const left = bounds.minX + c.col * bounds.cellWidth;
+          const right = bounds.minX + (c.col + 1) * bounds.cellWidth;
+          const top = bounds.minY + c.row * bounds.cellHeight;
+          const bottom = bounds.minY + (c.row + 1) * bounds.cellHeight;
+          if (ex >= left && ex <= right && ey >= top && ey <= bottom) {
+            toKillSet.add(enemy);
+            break;
+          }
+        }
+      }
+    }
+    return Array.from(toKillSet);
+  }
+
+  /**
+   * Quita enemigos de la escena y de la lista spawnedEnemies.
+   * Antes de llamar, la escena debe emitir WifeEventTypes.SoundReduced por cada enemigo.
+   */
+  public removeEnemies(enemies: BaseEnemy[]): void {
+    const set = new Set(enemies);
+    for (const enemy of enemies) {
+      enemy.removeFromScene();
+    }
+    this.spawnedEnemies = this.spawnedEnemies.filter((e) => !set.has(e));
+  }
+
+  /**
+   * Comprueba solapamiento jugador–enemigos. Si el jugador tiene cualquier item equipado
+   * no hace nada (puede moverse y atacar sin sufrir colisión). Si no tiene item, llama onCollisionWithPlayer.
+   */
+  public checkPlayerCollisions(_scene: Phaser.Scene, player: Player): void {
     if (player.isMoving) return;
     const playerCell = this.board.worldToCell(player.getX(), player.getY());
     if (!playerCell) return;
     const { col: playerCol, row: playerRow } = playerCell;
-    //console.log("playerCol:", playerCol, "playerRow:", playerRow);
+
+    if (player.hasEquippedItem) {
+      return;
+    }
+
     for (const enemy of this.spawnedEnemies) {
       const enemyCell = this.board.worldToCell(enemy.sprite.x, enemy.sprite.y);
       if (!enemyCell) continue;
       const { col: enemyCol, row: enemyRow } = enemyCell;
-      //console.log("enemyCol:", enemyCol, "enemyRow:", enemyRow);
       if (
         enemyRow === playerRow &&
         (enemyCol === playerCol || enemyCol === playerCol + 1)

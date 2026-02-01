@@ -131,7 +131,7 @@ export class Game extends Scene {
 
     // update enemy spawner
     this.enemySpawner.spawnEnemyOnScreen(delta, this, this.level);
-    this.enemySpawner.checkPlayerCollisions(this.player);
+    this.enemySpawner.checkPlayerCollisions(this, this.player);
     this.enemySpawner.moveEnemies(this);
   }
 
