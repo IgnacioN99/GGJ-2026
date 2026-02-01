@@ -17,6 +17,8 @@ class Player extends Phaser.GameObjects.Sprite {
   private _itemInGlobalCooldown: BaseItem | null = null; // Referencia para desuscribirse cuando termine el cooldown
   /** Si true, permite moverse sin item (p. ej. cuando no hay enemigos). Lo establece la escena. */
   private _allowMoveWithoutItem: boolean = false;
+  /** Si true, volumen casi al tope (wife a punto de despertar); se muestra sprite sorpresa en idle. */
+  private _aboutToLose: boolean = false;
 
   /** Inicializa sprite y dimensiones; posición inicial = destino. */
   constructor(scene: Scene, x: number, y: number) {
@@ -52,6 +54,18 @@ class Player extends Phaser.GameObjects.Sprite {
   /** Permite o no moverse sin item (p. ej. cuando no hay enemigos). Lo llama la escena cada frame. */
   setAllowMoveWithoutItem(allow: boolean): void {
     this._allowMoveWithoutItem = allow;
+  }
+
+  /** Indica si el volumen está casi al tope (wife a punto de despertar). En idle se muestra sprite sorpresa. */
+  setAboutToLose(aboutToLose: boolean): void {
+    if (this._aboutToLose === aboutToLose) return;
+    this._aboutToLose = aboutToLose;
+    if (this.isIdle()) this.restoreDefaultSprite();
+  }
+
+  /** Idle = no moviendo, no bloqueado, no en cooldown global (sprite mostrado es default/sorpresa). */
+  private isIdle(): boolean {
+    return !this.isMoving && !this._isBlocked && !this._isInGlobalCooldown;
   }
 
   /** Puede equipar = sin cooldown global, sin item equipado y no bloqueado. */
@@ -156,6 +170,7 @@ class Player extends Phaser.GameObjects.Sprite {
     if (triggersGlobalCooldown) {
       this._isInGlobalCooldown = true;
       this._itemInGlobalCooldown = item; // Para desuscribirse de CooldownComplete cuando termine
+      this.switchToCansadoSprite();
       this.scene.events.emit(PlayerEventTypes.GlobalCooldownStarted, {
         type: PlayerEventTypes.GlobalCooldownStarted,
       });
@@ -168,11 +183,12 @@ class Player extends Phaser.GameObjects.Sprite {
     }
   }
 
-  /** CooldownComplete: termina cooldown global y permite equipar items de nuevo. */
+  /** CooldownComplete: termina cooldown global, restaura sprite por defecto y permite equipar items de nuevo. */
   private onItemCooldownComplete(): void {
     // Solo terminar cooldown global si estaba activo
     if (this._isInGlobalCooldown) {
       this._isInGlobalCooldown = false;
+      this.restoreDefaultSprite();
       // Desuscribirse del item que activó el cooldown global
       if (this._itemInGlobalCooldown) {
         this._itemInGlobalCooldown.off(ItemEventTypes.CooldownComplete, this.onItemCooldownComplete, this);
@@ -198,6 +214,7 @@ class Player extends Phaser.GameObjects.Sprite {
     this.targetX = worldX;
     this.targetY = worldY;
     this.isMoving = true;
+    this.play("player-walk");
     return true;
   }
 
@@ -241,8 +258,9 @@ class Player extends Phaser.GameObjects.Sprite {
     this.y += moveY;
   }
 
-  /** Al llegar: emite ArrivedAtDestination, cambia sprite si es escoba, y usa el item si está listo. */
+  /** Al llegar: emite ArrivedAtDestination, restaura sprite de idle, cambia a escoba/manguera si toca, y usa el item si está listo. */
   private onArrivedAtDestination(): void {
+    this.restoreDefaultSprite();
     this.scene.events.emit(PlayerEventTypes.ArrivedAtDestination, {
       type: PlayerEventTypes.ArrivedAtDestination,
       payload: { x: this.x, y: this.y },
@@ -273,10 +291,20 @@ class Player extends Phaser.GameObjects.Sprite {
     this.play("player-manguera-use");
   }
 
-  /** Restaura el sprite por defecto. Detiene la animación (que repetía durante el uso del item). */
+  /** Cambia al sprite cansado (cooldown global tras usar manguera). */
+  private switchToCansadoSprite(): void {
+    this.stop();
+    this.setTexture("player-cansado");
+  }
+
+  /** Restaura el sprite por defecto (o sorpresa si aboutToLose). Detiene la animación (que repetía durante el uso del item). */
   private restoreDefaultSprite(): void {
     this.stop();
-    this.setTexture("player", 0);
+    if (this._aboutToLose) {
+      this.setTexture("player-sorpresa");
+    } else {
+      this.setTexture("player", 0);
+    }
   }
 
   getX(): number {

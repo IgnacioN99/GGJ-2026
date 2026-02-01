@@ -40,6 +40,13 @@ export class Preloader extends Scene {
     // Añade spritelata-frame1.png (o el nombre que uses) y cambia la segunda línea.
     this.load.image("player-manguera-0", "player/color_manguera_1.png");
     this.load.image("player-manguera-1", "player/color_manguera_2.png");
+    // Caminar entre bloques (paso 1 y paso 2)
+    this.load.image("player-paso-0", "player/VIEJO/paso 1.png");
+    this.load.image("player-paso-1", "player/VIEJO/paso 2.png");
+    // Cansado durante cooldown global (tras usar manguera)
+    this.load.image("player-cansado", "player/VIEJO/cansado.png");
+    // Sorpresa cuando el volumen está casi al tope (wife a punto de despertar)
+    this.load.image("player-sorpresa", "player/VIEJO/sorpresa.png");
     // Frames de animación del chorro de agua (ataque manguera)
     for (let i = 1; i <= 9; i++) {
       const num = String(i).padStart(3, "0");

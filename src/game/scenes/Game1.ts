@@ -45,6 +45,14 @@ const ITEM_UI = {
   disabledTint: 0x666666, // Gris cuando el item no está disponible
 };
 
+/** Formatea segundos restantes como "MM:SS". */
+function formatRemainingTime(remainingSeconds: number): string {
+  const total = Math.max(0, Math.ceil(remainingSeconds));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
 /** Representa un slot de la barra de items: item + su representación gráfica en pantalla. */
@@ -70,6 +78,7 @@ export class Game1 extends Scene {
   private escoba: Escoba; // Items equipables
   private manguera: Manguera;
   private itemSlots: ItemSlot[] = []; // UI de la barra de items
+  private timerText: Phaser.GameObjects.Text | null = null; // Tiempo restante MM:SS
   private enemySpawner: EnemySpawner;
   private level: GameLevel = 3;
   private backgroundSound: Phaser.Sound.BaseSound;
@@ -135,6 +144,12 @@ export class Game1 extends Scene {
       frameRate: 4, // Velocidad baja para que el uso de la manguera se vea más pausado
       repeat: -1, // Bucle durante el uso; se detiene en onItemUseCompleted
     });
+    this.anims.create({
+      key: "player-walk",
+      frames: [{ key: "player-paso-0" }, { key: "player-paso-1" }],
+      frameRate: 8,
+      repeat: -1, // Caminar entre bloques; se detiene al llegar
+    });
     // Animación del chorro de agua (ataque manguera en línea recta)
     this.anims.create({
       key: "agua-attack",
@@ -186,12 +201,35 @@ export class Game1 extends Scene {
       this.scene.start("GameOver", { won: false });
     });
 
+    // Sprite sorpresa cuando el volumen está casi al tope (wife a punto de despertar)
+    const VOLUME_ALERT_RATIO = 0.75;
+    const updatePlayerVolumeAlert = (): void => {
+      const aboutToLose =
+        this.wife.currentSound >= this.wife.maxSound * VOLUME_ALERT_RATIO;
+      this.player.setAboutToLose(aboutToLose);
+    };
+    this.wife.on(WifeEventTypes.SoundAdded, updatePlayerVolumeAlert);
+    this.wife.on(WifeEventTypes.SoundReduced, updatePlayerVolumeAlert);
+    this.wife.on(WifeEventTypes.Reset, updatePlayerVolumeAlert);
+    updatePlayerVolumeAlert();
+
     // Timer de partida: al terminar → victoria
     this.gameTimer = new GameTimer();
     this.gameTimer.on(GameTimerEventTypes.Finished, () => {
       this.backgroundSound.stop();
       this.scene.start("GameOver", { won: true });
     });
+
+    // Timer de tiempo restante centrado entre wife e items (MM:SS)
+    const timerY = ITEM_UI.startY + ITEM_UI.size / 2;
+    this.timerText = this.add
+      .text(w / 2, timerY, formatRemainingTime(this.gameTimer.remainingSeconds), {
+        fontSize: "44px",
+        color: "#000000",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(101);
 
     // Items equipables (escoba, manguera) con cooldown
     this.escoba = new Escoba();
@@ -412,6 +450,9 @@ export class Game1 extends Scene {
   /** Loop de Phaser: actualiza timer, fondos, cooldowns de items, spawner y UI. */
   update(_time: number, delta: number): void {
     this.gameTimer.update(delta);
+    if (this.timerText && !this.gameTimer.isFinished) {
+      this.timerText.setText(formatRemainingTime(this.gameTimer.remainingSeconds));
+    }
     this.updateFondoByTime();
 
     // Enemy spawner: spawn, colisiones y movimiento
