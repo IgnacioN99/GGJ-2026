@@ -25,7 +25,10 @@ export class Preloader extends Scene {
     this.load.audio("sfx_breath", "sounds/sfx/sfx_breath.ogg");
     this.load.audio("sfx_dog", "sounds/sfx/sfx_dog.ogg");
     this.load.audio("sfx_door", "sounds/sfx/sfx_door.ogg");
+    this.load.audio("sfx_medidor", "sounds/sfx/sfx_medidor.ogg");
+    this.load.audio("sfx_confirm", "sounds/sfx/sfx_confirm.ogg");
     this.load.audio("creditos", "sounds/credits.ogg");
+    this.load.audio("intro", "sounds/intro.ogg");
     this.load.image("logo", "logo.png");
     this.load.image("menu", "fondos/menu.png");
     this.load.image("creditos", "fondos/creditos.png");
@@ -83,6 +86,12 @@ export class Preloader extends Scene {
     }
     this.load.image("items/escoba", "items/escoba-icon.png");
     this.load.image("items/manguera", "items/mangera-icon.png");
+    // Intro slideshow cuadros (placeholder: fondos; replace with intro/cuadro_N.png for real slides).
+    const FONDOS_AS_CUADROS = ["fondo_01", "fondo_02", "fondo_03", "fondo_04"];
+    for (let i = 0; i < 4; i++) {
+      const src = FONDOS_AS_CUADROS[i % FONDOS_AS_CUADROS.length];
+      this.load.image(`cuadro_${i}`, `fondos/${src}.png`);
+    }
   }
 
   create() {

@@ -13,6 +13,12 @@ export class GameOver extends Scene {
   }
 
   create() {
+    this.sound.stopAll();
+    if (this.won) {
+      this.sound.add("sfx_dog", { loop: false }).play();
+    } else {
+      this.sound.add("sfx_door", { loop: false }).play();
+    }
     this.camera = this.cameras.main;
     this.camera.setBackgroundColor(this.won ? 0x008000 : 0x333333);
 

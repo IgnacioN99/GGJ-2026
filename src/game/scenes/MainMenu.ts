@@ -3,7 +3,7 @@ import { Scene, GameObjects } from "phaser";
 /** Cuando true, muestra botones game1/game2 como rectángulos rojos de debug. */
 const DEBUG_GAME_BUTTONS = true;
 
-const GAME_BTN_WIDTH = 210;
+const GAME_BTN_WIDTH = 250;
 const GAME_BTN_HEIGHT = 70;
 
 export class MainMenu extends Scene {
@@ -26,14 +26,22 @@ export class MainMenu extends Scene {
 
     if (DEBUG_GAME_BUTTONS) {
       const game1Btn = this.add
-        .rectangle(200, 530, GAME_BTN_WIDTH, GAME_BTN_HEIGHT, 0x000000, 0)
+        .rectangle(270, 530, GAME_BTN_WIDTH, GAME_BTN_HEIGHT, 0x000000, 0)
         .setInteractive({ useHandCursor: true });
       const game2Btn = this.add
-        .rectangle(200, 640, GAME_BTN_WIDTH, GAME_BTN_HEIGHT, 0x000000, 0)
+        .rectangle(270, 640, GAME_BTN_WIDTH, GAME_BTN_HEIGHT, 0x000000, 0)
         .setInteractive({ useHandCursor: true });
 
-      game1Btn.on("pointerdown", () => this.scene.start("Game1"));
-      game2Btn.on("pointerdown", () => this.scene.start("Creditos"));
+      game1Btn.on("pointerdown", () => {
+        this.sound.stopAll();
+        this.sound.add("sfx_confirm", { loop: false }).play();
+        this.scene.start("Game1");
+      });
+      game2Btn.on("pointerdown", () => {
+        this.sound.stopAll();
+        this.sound.add("sfx_confirm", { loop: false }).play();
+        this.scene.start("Creditos");
+      });
     }
   }
 }

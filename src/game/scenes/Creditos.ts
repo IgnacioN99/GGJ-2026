@@ -8,8 +8,18 @@ export class Creditos extends Scene {
   }
 
   create() {
-    this.sound.stopAll();
-    this.sound.add("creditos", { loop: true }).play();
+    //this.sound.stopAll();
+    const creditosSound = this.sound.add("creditos", {
+      loop: true,
+      volume: 0,
+    });
+    creditosSound.play();
+    this.tweens.add({
+      targets: creditosSound,
+      volume: 1,
+      duration: 1500,
+      ease: "Linear",
+    });
 
     const w = this.scale.width;
     const h = this.scale.height;

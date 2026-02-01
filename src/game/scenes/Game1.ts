@@ -229,7 +229,6 @@ export class Game1 extends Scene {
       const WIN_TRANSITION_DELAY_MS = 1000;
       this.time.delayedCall(WIN_TRANSITION_DELAY_MS, () => {
         this.backgroundSound.stop();
-        this.sound.play("sfx_dog");
         this.scene.start("GameOver", { won: true });
       });
     });
@@ -293,11 +292,24 @@ export class Game1 extends Scene {
     this.enemySpawner = new EnemySpawner(this.board);
 
     // Música de fondo (igual que Game2: parar otros sonidos y reproducir en loop)
-    this.sound.stopAll();
-    this.backgroundSound = this.sound.add("background", { loop: true });
+    //this.sound.stopAll();
+    this.backgroundSound = this.sound.add("background", {
+      loop: true,
+      volume: 0,
+    });
     this.backgroundSound.play();
+    this.tweens.add({
+      targets: this.backgroundSound,
+      volume: 1,
+      duration: 6000,
+      ease: "Linear",
+    });
+
     // Sonidos en bucle de escoba, manguera y respiración (cooldown global)
-    this.escobaLoopSound = this.sound.add("sfx_escoba", { loop: true });
+    this.escobaLoopSound = this.sound.add("sfx_escoba", {
+      loop: true,
+      volume: 0.35,
+    });
     this.mangueraLoopSound = this.sound.add("sfx_manguera", { loop: true });
     this.breathLoopSound = this.sound.add("sfx_breath", { loop: true });
 
@@ -663,14 +675,14 @@ export class Game1 extends Scene {
     const endX = Math.min(startX + jetDistance, bounds.maxX);
 
     const aguaSprite = this.add.sprite(startX, startYFinal, "agua-001");
-    aguaSprite.setOrigin(0.5, 0.5);
+    aguaSprite.setOrigin(0.17, 0.57);
     aguaSprite.setDepth(5);
 
     aguaSprite.play("agua-attack");
 
     this.tweens.add({
       targets: aguaSprite,
-      x: endX,
+      x: startX,
       duration: this.manguera.useDurationMs,
       ease: "Linear",
       onComplete: () => {
