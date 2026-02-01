@@ -588,7 +588,7 @@ export class Game1 extends Scene {
         soundReduced(enemy.soundContribution),
       );
     }
-    this.enemySpawner.removeEnemies(toKill);
+    this.enemySpawner.removeEnemies(this, toKill);
   }
 
   /**
@@ -657,7 +657,7 @@ export class Game1 extends Scene {
         soundReduced(enemy.soundContribution),
       );
     }
-    this.enemySpawner.removeEnemies(toKill);
+    this.enemySpawner.removeEnemies(this, toKill);
   }
 
   /**
@@ -678,7 +678,7 @@ export class Game1 extends Scene {
         soundReduced(enemy.soundContribution),
       );
     }
-    this.enemySpawner.removeEnemies(toKill);
+    this.enemySpawner.removeEnemies(this, toKill);
   }
 
   /** Emite evento de ataque en celda (solo debe llamarse con escoba equipada); el listener mata enemigos en la celda de adelante. */

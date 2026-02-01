@@ -140,6 +140,7 @@ export class EnemySpawner {
 
   public moveEnemies(_scene: Phaser.Scene): void {
     this.spawnedEnemies.forEach((enemy: BaseEnemy) => {
+      if (enemy.isDying) return;
       const nextX = enemy.calculateNextX();
 
       const willOverlap = this.spawnedEnemies.some((other: BaseEnemy) => {
@@ -167,7 +168,7 @@ export class EnemySpawner {
     const rows = this.board.getTotalRows();
 
     for (const enemy of this.spawnedEnemies) {
-      if (!enemy.sprite?.active) continue;
+      if (!enemy.sprite?.active || enemy.isDying) continue;
       const ex = enemy.sprite.x;
       const ey = enemy.sprite.y;
 
@@ -201,15 +202,15 @@ export class EnemySpawner {
   }
 
   /**
-   * Quita enemigos de la escena y de la lista spawnedEnemies.
+   * Muestra sprite die, espera 0.5s y quita enemigos de la escena y de la lista spawnedEnemies.
    * Antes de llamar, la escena debe emitir WifeEventTypes.SoundReduced por cada enemigo.
    */
-  public removeEnemies(enemies: BaseEnemy[]): void {
-    const set = new Set(enemies);
+  public removeEnemies(scene: Phaser.Scene, enemies: BaseEnemy[]): void {
     for (const enemy of enemies) {
-      enemy.removeFromScene();
+      enemy.playDeathSequence(scene, () => {
+        this.spawnedEnemies = this.spawnedEnemies.filter((e) => e !== enemy);
+      });
     }
-    this.spawnedEnemies = this.spawnedEnemies.filter((e) => !set.has(e));
   }
 
   /**
@@ -227,6 +228,7 @@ export class EnemySpawner {
     }
 
     for (const enemy of this.spawnedEnemies) {
+      if (enemy.isDying) continue;
       const enemyCell = this.board.worldToCell(enemy.sprite.x, enemy.sprite.y);
       if (!enemyCell) continue;
       const { col: enemyCol, row: enemyRow } = enemyCell;

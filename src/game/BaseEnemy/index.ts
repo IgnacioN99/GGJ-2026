@@ -20,8 +20,11 @@ export abstract class BaseEnemy {
   spawnX: number = 0;
   /** Contribución actual al sonido de la Wife (1..ENEMY_MAX_SOUND_CONTRIBUTION). 0 = aún no registrado. */
   soundContribution: number = 0;
+  /** Si está en secuencia de muerte (mostrando die, esperando antes de destruir). */
+  isDying: boolean = false;
 
   move(): void {
+    if (this.isDying) return;
     const nextX = this.calculateNextX();
 
     if (this.getDistanceToHouse() > 270 && this.canMove) {
@@ -65,9 +68,27 @@ export abstract class BaseEnemy {
 
   /** Removes this enemy's sprite from the scene. Caller should remove from spawn list. */
   removeFromScene(): void {
-    if (this.sprite.scene) {
+    if (this.sprite?.scene) {
       console.log("[BaseEnemy] Enemy destroyed", this.type);
       this.sprite.destroy();
     }
+  }
+
+  /** Shows die sprite, waits 0.5s, then removes. Calls onComplete when done. */
+  playDeathSequence(scene: Phaser.Scene, onComplete?: () => void): void {
+    if (this.isDying) return;
+    this.isDying = true;
+    this.canMove = false;
+
+    const diePath = this.spritePath.replace("sprite.png", "die.png");
+    if (scene.textures.exists(diePath)) {
+      this.sprite.stop();
+      this.sprite.setTexture(diePath);
+    }
+
+    scene.time.delayedCall(500, () => {
+      this.removeFromScene();
+      onComplete?.();
+    });
   }
 }

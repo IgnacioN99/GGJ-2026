@@ -21,6 +21,7 @@ export class Preloader extends Scene {
     this.load.audio("menu", "sounds/menu.ogg");
     this.load.audio("background", "sounds/background.ogg");
     this.load.image("logo", "logo.png");
+    this.load.image("menu", "fondos/menu.png");
     this.load.image(
       "enemies/cascabel/sprite.png",
       "enemies/cascabel/sprite.png",
@@ -29,14 +30,17 @@ export class Preloader extends Scene {
       "enemies/cascabel/sprite2.png",
       "enemies/cascabel/sprite2.png",
     );
+    this.load.image("enemies/cascabel/die.png", "enemies/cascabel/die.png");
     this.load.image("fondo_01", "fondos/fondo_01.png");
     this.load.image("fondo_02", "fondos/fondo_02.png");
     this.load.image("fondo_03", "fondos/fondo_03.png");
     this.load.image("fondo_04", "fondos/fondo_04.png");
     this.load.image("enemies/diablo/sprite.png", "enemies/diablo/sprite.png");
     this.load.image("enemies/diablo/sprite2.png", "enemies/diablo/sprite2.png");
+    this.load.image("enemies/diablo/die.png", "enemies/diablo/die.png");
     this.load.image("enemies/tambor/sprite.png", "enemies/tambor/sprite.png");
     this.load.image("enemies/tambor/sprite2.png", "enemies/tambor/sprite2.png");
+    this.load.image("enemies/tambor/die.png", "enemies/tambor/die.png");
     this.load.image("player", "player/sprite.png");
     // Escoba: 2 imágenes separadas, cada una = 1 frame.
     // Añade sprite-escoba-frame1.png cuando lo tengas y cambia la segunda línea.
@@ -70,7 +74,6 @@ export class Preloader extends Scene {
     }
     this.load.image("items/escoba", "items/escoba-icon.png");
     this.load.image("items/manguera", "items/mangera-icon.png");
-
   }
 
   create() {

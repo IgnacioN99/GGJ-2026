@@ -1,41 +1,39 @@
-import { Scene, GameObjects } from 'phaser';
+import { Scene, GameObjects } from "phaser";
 
-export class MainMenu extends Scene
-{
-    background: GameObjects.Image;
-    logo: GameObjects.Image;
-    title: GameObjects.Text;
+/** Cuando true, muestra botones game1/game2 como rectángulos rojos de debug. */
+const DEBUG_GAME_BUTTONS = true;
 
-    constructor ()
-    {
-        super('MainMenu');
+const GAME_BTN_WIDTH = 210;
+const GAME_BTN_HEIGHT = 70;
+
+export class MainMenu extends Scene {
+  background: GameObjects.Image;
+  logo: GameObjects.Image;
+  title: GameObjects.Text;
+
+  constructor() {
+    super("MainMenu");
+  }
+
+  create() {
+    this.sound.stopAll();
+    this.sound.add("menu", { loop: true }).play();
+
+    const w = this.scale.width;
+    const h = this.scale.height;
+    this.background = this.add.image(w / 2, h / 2, "menu");
+    this.background.setDisplaySize(w, h);
+
+    if (DEBUG_GAME_BUTTONS) {
+      const game1Btn = this.add
+        .rectangle(200, 530, GAME_BTN_WIDTH, GAME_BTN_HEIGHT, 0x000000, 0)
+        .setInteractive({ useHandCursor: true });
+      const game2Btn = this.add
+        .rectangle(200, 640, GAME_BTN_WIDTH, GAME_BTN_HEIGHT, 0x000000, 0)
+        .setInteractive({ useHandCursor: true });
+
+      game1Btn.on("pointerdown", () => this.scene.start("Game1"));
+      game2Btn.on("pointerdown", () => this.scene.start("Game2"));
     }
-
-    create ()
-    {
-        this.sound.stopAll();
-        this.sound.add('menu', { loop: true }).play();
-
-        this.background = this.add.image(512, 384, 'background');
-
-        this.logo = this.add.image(512, 300, 'logo');
-
-        this.title = this.add.text(512, 460, 'Main Menu', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5);
-
-        const btnStyle = {
-            fontFamily: 'Arial Black', fontSize: 28, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 6,
-            align: 'center'
-        };
-
-        const game1Btn = this.add.text(512, 540, 'Game 1', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        const game2Btn = this.add.text(512, 600, 'Game 2', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-        game1Btn.on('pointerdown', () => this.scene.start('Game1'));
-        game2Btn.on('pointerdown', () => this.scene.start('Game2'));
-    }
+  }
 }
