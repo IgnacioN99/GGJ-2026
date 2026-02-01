@@ -55,9 +55,9 @@ function formatRemainingTime(remainingSeconds: number): string {
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
-/** Representa un slot de la barra de items: item + su representación gráfica en pantalla. */
+/** Representa un slot de la barra de items: item + su representación gráfica en pantalla. Si item es null, es decorativo (sin acción). */
 interface ItemSlot {
-  item: BaseItem;
+  item: BaseItem | null;
   graphics: Phaser.GameObjects.Rectangle;
   icon?: Phaser.GameObjects.Image;
   isDisabled: boolean;
@@ -352,10 +352,10 @@ export class Game1 extends Scene {
     });
   }
 
-  /** Dibuja la barra de items (escoba, manguera) arriba a la derecha con iconos clicables. */
+  /** Dibuja la barra de items (escoba, manguera, perro) arriba a la derecha con iconos clicables. El perro es decorativo (no dispara acción). */
   private createItemUI(): void {
     const w = this.scale.width;
-    const totalItems = 2;
+    const totalItems = 3;
     const totalWidth =
       totalItems * ITEM_UI.size + (totalItems - 1) * ITEM_UI.gap;
     ITEM_UI.startX = w - totalWidth - 20;
@@ -420,6 +420,43 @@ export class Game1 extends Scene {
       isDisabled: false,
     });
 
+    // Slot Perro: solo icono decorativo (no equipable, cursor not-allowed al hover)
+    const perroX = ITEM_UI.startX + 2 * (ITEM_UI.size + ITEM_UI.gap);
+    const perroCenterX = perroX + ITEM_UI.size / 2;
+    const perroCenterY = ITEM_UI.startY + ITEM_UI.size / 2;
+    const perroGraphics = this.add
+      .rectangle(
+        perroCenterX,
+        perroCenterY,
+        ITEM_UI.size,
+        ITEM_UI.size,
+        0x000000,
+        0,
+      )
+      .setStrokeStyle(0, 0x000000)
+      .setInteractive({ useHandCursor: false })
+      .setDepth(100);
+
+    perroGraphics.on("pointerover", () => {
+      this.input.setDefaultCursor("not-allowed");
+    });
+    perroGraphics.on("pointerout", () => {
+      this.input.setDefaultCursor("default");
+    });
+
+    const perroIcon = this.add
+      .image(perroCenterX, perroCenterY, "items/perro")
+      .setDisplaySize(ITEM_UI.size + 10, ITEM_UI.size + 10)
+      .setOrigin(0.5)
+      .setDepth(101);
+
+    this.itemSlots.push({
+      item: null,
+      graphics: perroGraphics,
+      icon: perroIcon,
+      isDisabled: true,
+    });
+
     this.updateItemUI();
   }
 
@@ -436,6 +473,7 @@ export class Game1 extends Scene {
 
   /** Equipa el item del slot si está disponible y el jugador puede equipar. */
   private onItemSlotClicked(slot: ItemSlot): void {
+    if (!slot.item) return; // Slot decorativo (ej. perro), no hace nada
     if (slot.isDisabled) {
       console.log("[Game1] Item no disponible");
       return;
@@ -460,6 +498,17 @@ export class Game1 extends Scene {
 
     for (let i = 0; i < this.itemSlots.length; i++) {
       const slot = this.itemSlots[i];
+      if (!slot.item) {
+        // Slot decorativo (perro): icono más opaco, sin tint
+        slot.graphics.setStrokeStyle(0, 0x000000);
+        slot.graphics.setFillStyle(0x000000, 0);
+        slot.graphics.setAlpha(1);
+        if (slot.icon) {
+          slot.icon.setAlpha(1);
+          slot.icon.clearTint();
+        }
+        continue;
+      }
       const isEquipped = equippedItem === slot.item;
       const isOnCooldown = slot.item.isOnCooldown;
 
@@ -531,6 +580,7 @@ export class Game1 extends Scene {
 
     // Cooldown de items no equipados (el equipado lo actualiza el player)
     for (const slot of this.itemSlots) {
+      if (!slot.item) continue;
       if (slot.item !== this.player.equippedItem) {
         slot.item.update(delta);
       }

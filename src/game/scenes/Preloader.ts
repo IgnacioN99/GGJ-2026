@@ -86,6 +86,7 @@ export class Preloader extends Scene {
     }
     this.load.image("items/escoba", "items/escoba-icon.png");
     this.load.image("items/manguera", "items/mangera-icon.png");
+    this.load.image("items/perro", "items/perro_icon_pay.png");
     // Intro slideshow cuadros (placeholder: fondos; replace with intro/cuadro_N.png for real slides).
     const FONDOS_AS_CUADROS = ["fondo_01", "fondo_02", "fondo_03", "fondo_04"];
     for (let i = 0; i < 4; i++) {
