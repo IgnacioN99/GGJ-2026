@@ -25,12 +25,18 @@ export class Preloader extends Scene {
       "enemies/cascabel/sprite.png",
       "enemies/cascabel/sprite.png",
     );
+    this.load.image(
+      "enemies/cascabel/sprite2.png",
+      "enemies/cascabel/sprite2.png",
+    );
     this.load.image("fondo_01", "fondos/fondo_01.png");
     this.load.image("fondo_02", "fondos/fondo_02.png");
     this.load.image("fondo_03", "fondos/fondo_03.png");
     this.load.image("fondo_04", "fondos/fondo_04.png");
     this.load.image("enemies/diablo/sprite.png", "enemies/diablo/sprite.png");
+    this.load.image("enemies/diablo/sprite2.png", "enemies/diablo/sprite2.png");
     this.load.image("enemies/tambor/sprite.png", "enemies/tambor/sprite.png");
+    this.load.image("enemies/tambor/sprite2.png", "enemies/tambor/sprite2.png");
     this.load.image("player", "player/sprite.png");
     // Escoba: 2 imágenes separadas, cada una = 1 frame.
     // Añade sprite-escoba-frame1.png cuando lo tengas y cambia la segunda línea.

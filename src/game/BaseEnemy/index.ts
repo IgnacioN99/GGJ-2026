@@ -4,13 +4,16 @@ import { EnemyTypes } from "./types";
 /** Contribución máxima de sonido por enemigo (1 al spawn, hasta este valor al acercarse). */
 export const ENEMY_MAX_SOUND_CONTRIBUTION = 10;
 
+/** Frame rate for the sprite/sprite2 walk animation. */
+const ENEMY_WALK_FRAME_RATE = 4;
+
 export abstract class BaseEnemy {
   speed: number = 0.5;
   type: EnemyTypes;
   spritePath: string;
-  sprite: Phaser.GameObjects.Image;
-  width: number = 100;
-  height: number = 100;
+  sprite: Phaser.GameObjects.Sprite;
+  width: number = 125;
+  height: number = 150;
   life: number = 100;
   canMove: boolean = true;
   /** Posición X donde spawneó (origen del tablero). */
@@ -37,10 +40,23 @@ export abstract class BaseEnemy {
 
   setSprite(x: number, y: number, scene: Phaser.Scene): void {
     this.spawnX = x;
-    this.sprite = scene.add.image(x, y, this.spritePath);
+    const sprite2Path = this.spritePath.replace("sprite.png", "sprite2.png");
+    const animKey = `enemy-walk-${this.type}`;
+
+    if (!scene.anims.exists(animKey)) {
+      scene.anims.create({
+        key: animKey,
+        frames: [{ key: this.spritePath }, { key: sprite2Path }],
+        frameRate: ENEMY_WALK_FRAME_RATE,
+        repeat: -1,
+      });
+    }
+
+    this.sprite = scene.add.sprite(x, y, this.spritePath);
     this.sprite.setOrigin(0.5, 1);
     this.sprite.displayWidth = this.width;
     this.sprite.displayHeight = this.height;
+    this.sprite.play(animKey);
   }
 
   calculateNextX(): number {
