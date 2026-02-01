@@ -30,6 +30,9 @@ class Player extends Phaser.GameObjects.Sprite {
     this.displayHeight = 150;
     this.setDepth(100);
   }
+  get getXPos(): number {
+    return this.targetX
+  }
 
   get equippedItem(): BaseItem | null {
     return this._equippedItem;

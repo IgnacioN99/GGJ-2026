@@ -674,7 +674,9 @@ export class Game1 extends Scene {
     const jetDistance = AGUA_JET_LENGTH_CELLS * bounds.cellWidth;
     const endX = Math.min(startX + jetDistance, bounds.maxX);
 
-    const aguaSprite = this.add.sprite(startX, startYFinal, "agua-001");
+    const xPos = this.player.getX() + 110
+    const yPos = this.player.getY() - 30
+    const aguaSprite = this.add.sprite( xPos,yPos, "agua-001");
     aguaSprite.setOrigin(0.17, 0.57);
     aguaSprite.setDepth(5);
 
@@ -682,7 +684,7 @@ export class Game1 extends Scene {
 
     this.tweens.add({
       targets: aguaSprite,
-      x: startX,
+      x: xPos,
       duration: this.manguera.useDurationMs,
       ease: "Linear",
       onComplete: () => {
