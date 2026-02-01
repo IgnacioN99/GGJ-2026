@@ -370,6 +370,10 @@ export class Board {
   public getTotalRows(): number {
     return this.config.rows;
   }
+
+  public getTotalCols(): number {
+    return this.config.cols;
+  }
 }
 
 export type {
