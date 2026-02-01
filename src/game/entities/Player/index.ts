@@ -160,13 +160,13 @@ class Player extends Phaser.GameObjects.Sprite {
     this._equippedItem = null;
 
     // Restaurar sprite por defecto si se usó escoba o manguera
-    if (item?.itemType === ItemTypes.ESCOBA){
-        this.x -=80;
-        this.restoreDefaultSprite();
-      }
-    else if(item?.itemType === ItemTypes.MANGUERA) {
-        this.restoreDefaultSprite();
+    if (
+      item?.itemType === ItemTypes.ESCOBA ||
+      item?.itemType === ItemTypes.MANGUERA
+    ) {
+      this.restoreDefaultSprite();
     }
+
     // Desuscribirse de UseStarted/UseCompleted para evitar listeners duplicados si se vuelve a equipar.
     // CooldownComplete lo mantenemos si hay cooldown global, para poder desbloquear cuando termine.
     if (item) {
@@ -294,7 +294,6 @@ class Player extends Phaser.GameObjects.Sprite {
 
     // Cambiar sprite según el item equipado antes de usarlo
     if (this._equippedItem?.itemType === ItemTypes.ESCOBA) {
-      this.x += 80;
       this.switchToEscobaSprite();
     } else if (this._equippedItem?.itemType === ItemTypes.MANGUERA) {
       this.switchToMangueraSprite();
@@ -319,7 +318,6 @@ class Player extends Phaser.GameObjects.Sprite {
 
   /** Cambia al sprite cansado (cooldown global tras usar manguera). */
   private switchToCansadoSprite(): void {
-
     this.stop();
     this.setTexture("player-cansado");
   }
