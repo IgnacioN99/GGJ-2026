@@ -16,7 +16,7 @@ import entities, {
 } from "../entities";
 import { Board, type Cell } from "../Board";
 import { GameLevel, getBoardConfigForLevel } from "../Board/type";
-import { ENEMY_MAX_SOUND_CONTRIBUTION } from "../BaseEnemy";
+import { ENEMY_MAX_SOUND_CONTRIBUTION, ENEMY_STOP_X } from "../BaseEnemy";
 import { EnemySpawner } from "../EnemySpawner";
 import { GameTimer, GameTimerEventTypes } from "../GameTimer";
 
@@ -24,9 +24,6 @@ import { GameTimer, GameTimerEventTypes } from "../GameTimer";
 
 /** Evento emitido cuando el jugador ataca en una celda (payload: Cell). Al escucharlo se matan enemigos en esa celda y la de adelante. */
 export const EVENT_ATTACK_AT_CELL = "attackAtCell";
-
-/** X donde los enemigos dejan de avanzar (cerca de la base). Debe coincidir con BaseEnemy.move(). */
-const BOARD_END_X = 270;
 
 /** Claves de fondos (mismo fondo, distintos tonos). Se rotan por tiempo con crossfade. */
 const FONDOS_KEYS = ["fondo_01", "fondo_02", "fondo_03", "fondo_04"] as const;
@@ -635,7 +632,7 @@ export class Game1 extends Scene {
    */
   private updateEnemyWifeSound(): void {
     const enemies = this.enemySpawner.getSpawnedEnemies();
-    const range = Math.max(1, this.scale.width - BOARD_END_X);
+    const range = Math.max(1, this.scale.width - ENEMY_STOP_X);
 
     for (const enemy of enemies) {
       if (!enemy.sprite?.active) continue;

@@ -10,6 +10,9 @@ const ENEMY_WALK_FRAME_RATE = 4;
 /** Depth base for enemies. Lower row = lower depth (behind), higher row = higher depth (front). */
 const ENEMY_DEPTH_BASE = 10;
 
+/** X mínimo: los enemigos dejan de avanzar al llegar a la casa. Usar el mismo valor en Game1 (BOARD_END_X). */
+export const ENEMY_STOP_X = 270;
+
 export abstract class BaseEnemy {
   speed: number = 0.5;
   type: EnemyTypes;
@@ -30,7 +33,7 @@ export abstract class BaseEnemy {
     if (this.isDying) return;
     const nextX = this.calculateNextX();
 
-    if (this.getDistanceToHouse() > 270 && this.canMove) {
+    if (this.getDistanceToHouse() > ENEMY_STOP_X && this.canMove) {
       this.sprite.x = nextX;
     }
   }

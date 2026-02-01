@@ -129,7 +129,9 @@ export class EnemySpawner {
     // pick a random lane
     const randomRow = Math.floor(Math.random() * this.board.getTotalRows());
     const { y } = this.board.cellToWorld(0, randomRow);
-    const x = scene.scale.width;
+    const baseX = scene.scale.width;
+    const spawnOffset = 15;
+    const x = baseX + Math.random() * spawnOffset;
 
     // spawn
     if (level === 1) {
@@ -151,10 +153,13 @@ export class EnemySpawner {
       const nextX = enemy.calculateNextX();
 
       const willOverlap = this.spawnedEnemies.some((other: BaseEnemy) => {
-        if (other === enemy) return false;
+        if (other === enemy || other.isDying) return false;
         const sameRow = enemy.sprite.y === other.sprite.y;
+        if (!sameRow) return false;
+        const otherIsAhead = other.sprite.x < enemy.sprite.x;
+        if (!otherIsAhead) return false;
         const xDistance = Math.abs(nextX - other.sprite.x);
-        return sameRow && xDistance <= enemy.sprite.width / 4;
+        return xDistance <= enemy.sprite.width / 4;
       });
 
       if (!willOverlap) {
