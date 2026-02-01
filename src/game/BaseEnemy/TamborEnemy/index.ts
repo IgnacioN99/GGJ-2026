@@ -7,6 +7,5 @@ export class TamborEnemy extends BaseEnemy {
     this.type = EnemyTypes.TAMBOR;
     this.speed = SPEED_BY_TYPE[this.type];
     this.spritePath = "enemies/tambor/sprite.png";
-    this.tint = 0x0000ff;
   }
 }
