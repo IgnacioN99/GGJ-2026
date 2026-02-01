@@ -49,6 +49,7 @@ export class EnemySpawner {
     delta: number,
     x: number,
     y: number,
+    row: number,
   ): void {
     const enemy = this.instanceRandomEnemy();
     this.spawnCooldown -= delta;
@@ -72,7 +73,7 @@ export class EnemySpawner {
         this.spawnCooldown = this.COOLDOWN_TIME_MS;
       }
 
-      enemy.setSprite(x, y, scene);
+      enemy.setSprite(x, y, scene, row);
       this.spawnedEnemies.push(enemy);
       console.log("[EnemySpawner] Enemy spawned", enemy.type);
     }
@@ -84,13 +85,14 @@ export class EnemySpawner {
     delta: number,
     x: number,
     y: number,
+    row: number,
   ): void {
     const enemy = this.instanceRandomEnemy();
     this.spawnCooldown -= delta;
     if (this.spawnCooldown <= 0 || this.forceSpawn) {
       this.spawnCooldown = this.COOLDOWN_TIME_MS;
       this.forceSpawn = false;
-      enemy.setSprite(x, y, scene);
+      enemy.setSprite(x, y, scene, row);
       this.spawnedEnemies.push(enemy);
       console.log("[EnemySpawner] Enemy spawned", enemy.type);
     }
@@ -106,12 +108,17 @@ export class EnemySpawner {
     }
   }
 
-  private introSpawnStrategy(scene: Scene, x: number, y: number): void {
+  private introSpawnStrategy(
+    scene: Scene,
+    x: number,
+    y: number,
+    row: number,
+  ): void {
     if (this.spawnedEnemies.length === 0 || this.forceSpawn) {
       const enemy = this.introEnemies.pop();
       if (!enemy) return;
       this.forceSpawn = false;
-      enemy.setSprite(x, y, scene);
+      enemy.setSprite(x, y, scene, row);
       this.spawnedEnemies.push(enemy);
       console.log("[EnemySpawner] Enemy spawned", enemy.type);
       return;
@@ -126,11 +133,11 @@ export class EnemySpawner {
 
     // spawn
     if (level === 1) {
-      this.introSpawnStrategy(scene, x, y);
+      this.introSpawnStrategy(scene, x, y, randomRow);
     } else if (level === 2) {
-      this.realSpawnStrategy(scene, delta, x, y);
+      this.realSpawnStrategy(scene, delta, x, y, randomRow);
     } else if (level === 3) {
-      this.hardSpawnStrategy(scene, delta, x, y);
+      this.hardSpawnStrategy(scene, delta, x, y, randomRow);
     }
   }
 

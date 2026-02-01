@@ -7,6 +7,9 @@ export const ENEMY_MAX_SOUND_CONTRIBUTION = 10;
 /** Frame rate for the sprite/sprite2 walk animation. */
 const ENEMY_WALK_FRAME_RATE = 4;
 
+/** Depth base for enemies. Lower row = lower depth (behind), higher row = higher depth (front). */
+const ENEMY_DEPTH_BASE = 10;
+
 export abstract class BaseEnemy {
   speed: number = 0.5;
   type: EnemyTypes;
@@ -41,7 +44,7 @@ export abstract class BaseEnemy {
     console.log("[BaseEnemy] Enemy collided with player", this.type);
   }
 
-  setSprite(x: number, y: number, scene: Phaser.Scene): void {
+  setSprite(x: number, y: number, scene: Phaser.Scene, row: number = 0): void {
     this.spawnX = x;
     const sprite2Path = this.spritePath.replace("sprite.png", "sprite2.png");
     const animKey = `enemy-walk-${this.type}`;
@@ -59,6 +62,7 @@ export abstract class BaseEnemy {
     this.sprite.setOrigin(0.5, 1);
     this.sprite.displayWidth = this.width;
     this.sprite.displayHeight = this.height;
+    this.sprite.setDepth(ENEMY_DEPTH_BASE + row);
     this.sprite.play(animKey);
   }
 
