@@ -124,13 +124,13 @@ export class Game extends Scene {
     });
   }
 
-  update(delta: number): void {
+  update(_time: number, delta: number): void {
     // update game timer
     this.gameTimer.update(delta);
     this.updateFondoByTime();
 
     // update enemy spawner
-    this.enemySpawner.spawnEnemyOnScreen(this, this.level);
+    this.enemySpawner.spawnEnemyOnScreen(delta, this, this.level);
     this.enemySpawner.checkPlayerCollisions(this.player);
     this.enemySpawner.moveEnemies(this);
   }
