@@ -1,41 +1,34 @@
-import { Scene } from 'phaser';
+import { Scene } from "phaser";
 
-export class GameOver extends Scene
-{
-    camera: Phaser.Cameras.Scene2D.Camera;
-    background: Phaser.GameObjects.Image;
-    gameover_text : Phaser.GameObjects.Text;
-    private won = false;
+export class GameOver extends Scene {
+  camera: Phaser.Cameras.Scene2D.Camera;
+  private won = false;
 
-    constructor ()
-    {
-        super('GameOver');
-    }
+  constructor() {
+    super("GameOver");
+  }
 
-    init(data: { won?: boolean }): void {
-        this.won = data?.won ?? false;
-    }
+  init(data: { won?: boolean }): void {
+    this.won = data?.won ?? false;
+  }
 
-    create ()
-    {
-        this.camera = this.cameras.main;
-        this.camera.setBackgroundColor(this.won ? 0x008000 : 0xff0000);
+  create() {
+    this.camera = this.cameras.main;
+    this.camera.setBackgroundColor(this.won ? 0x008000 : 0x333333);
 
-        this.background = this.add.image(512, 384, 'background');
-        this.background.setAlpha(0.5);
+    const w = this.scale.width;
+    const h = this.scale.height;
+    const key = this.won ? "you-win" : "game-over";
+    const image = this.add.image(w / 2, h / 2, key);
+    image.setDisplaySize(w, h);
 
-        const message = this.won ? 'You Win!' : 'Game Over';
-        this.gameover_text = this.add.text(512, 384, message, {
-            fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        });
-        this.gameover_text.setOrigin(0.5);
-
-        this.input.once('pointerdown', () => {
-
-            this.scene.start('MainMenu');
-
-        });
-    }
+    // Volver al menú con ESC
+    this.input.keyboard?.on(
+      "keydown-ESC",
+      () => {
+        this.scene.start("MainMenu");
+      },
+      this,
+    );
+  }
 }

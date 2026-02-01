@@ -33,7 +33,7 @@ export class MainMenu extends Scene {
         .setInteractive({ useHandCursor: true });
 
       game1Btn.on("pointerdown", () => this.scene.start("Game1"));
-      game2Btn.on("pointerdown", () => this.scene.start("Game2"));
+      game2Btn.on("pointerdown", () => this.scene.start("Creditos"));
     }
   }
 }

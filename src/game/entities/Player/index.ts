@@ -28,6 +28,7 @@ class Player extends Phaser.GameObjects.Sprite {
     this.setOrigin(0.5, 1);
     this.displayWidth = 75;
     this.displayHeight = 150;
+    this.setDepth(100);
   }
 
   get equippedItem(): BaseItem | null {
@@ -48,7 +49,9 @@ class Player extends Phaser.GameObjects.Sprite {
 
   /** Puede moverse = (tiene item equipado o allowMoveWithoutItem) y no está bloqueado. Sin item solo puede si no hay enemigos (la escena pone allowMoveWithoutItem). */
   get canMove(): boolean {
-    return (this.hasEquippedItem || this._allowMoveWithoutItem) && !this._isBlocked;
+    return (
+      (this.hasEquippedItem || this._allowMoveWithoutItem) && !this._isBlocked
+    );
   }
 
   /** Permite o no moverse sin item (p. ej. cuando no hay enemigos). Lo llama la escena cada frame. */
@@ -70,7 +73,9 @@ class Player extends Phaser.GameObjects.Sprite {
 
   /** Puede equipar = sin cooldown global, sin item equipado y no bloqueado. */
   get canEquipItem(): boolean {
-    return !this._isInGlobalCooldown && !this.hasEquippedItem && !this._isBlocked;
+    return (
+      !this._isInGlobalCooldown && !this.hasEquippedItem && !this._isBlocked
+    );
   }
 
   /** Equipa un item; suscribe a sus eventos. Retorna false si no puede equipar. */
@@ -119,7 +124,11 @@ class Player extends Phaser.GameObjects.Sprite {
     // Desuscribirse de los mismos eventos suscritos en equipItem()
     item.off(ItemEventTypes.UseStarted, this.onItemUseStarted, this);
     item.off(ItemEventTypes.UseCompleted, this.onItemUseCompleted, this);
-    item.off(ItemEventTypes.CooldownComplete, this.onItemCooldownComplete, this);
+    item.off(
+      ItemEventTypes.CooldownComplete,
+      this.onItemCooldownComplete,
+      this,
+    );
 
     item.unequip();
     this._equippedItem = null;
@@ -148,7 +157,10 @@ class Player extends Phaser.GameObjects.Sprite {
     this._equippedItem = null;
 
     // Restaurar sprite por defecto si se usó escoba o manguera
-    if (item?.itemType === ItemTypes.ESCOBA || item?.itemType === ItemTypes.MANGUERA) {
+    if (
+      item?.itemType === ItemTypes.ESCOBA ||
+      item?.itemType === ItemTypes.MANGUERA
+    ) {
       this.restoreDefaultSprite();
     }
 
@@ -177,9 +189,15 @@ class Player extends Phaser.GameObjects.Sprite {
       console.log("[Player] Desbloqueado, entrando en cooldown global");
     } else {
       if (item) {
-        item.off(ItemEventTypes.CooldownComplete, this.onItemCooldownComplete, this);
+        item.off(
+          ItemEventTypes.CooldownComplete,
+          this.onItemCooldownComplete,
+          this,
+        );
       }
-      console.log("[Player] Item usado (sin blocksItems), puede equipar otro de inmediato");
+      console.log(
+        "[Player] Item usado (sin blocksItems), puede equipar otro de inmediato",
+      );
     }
   }
 
@@ -191,7 +209,11 @@ class Player extends Phaser.GameObjects.Sprite {
       this.restoreDefaultSprite();
       // Desuscribirse del item que activó el cooldown global
       if (this._itemInGlobalCooldown) {
-        this._itemInGlobalCooldown.off(ItemEventTypes.CooldownComplete, this.onItemCooldownComplete, this);
+        this._itemInGlobalCooldown.off(
+          ItemEventTypes.CooldownComplete,
+          this.onItemCooldownComplete,
+          this,
+        );
         this._itemInGlobalCooldown = null;
       }
       this.scene.events.emit(PlayerEventTypes.GlobalCooldownEnded, {

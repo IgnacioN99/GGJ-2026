@@ -140,10 +140,7 @@ export class Game1 extends Scene {
     });
     this.anims.create({
       key: "player-manguera-use",
-      frames: [
-        { key: "player-manguera-0" },
-        { key: "player-manguera-1" },
-      ],
+      frames: [{ key: "player-manguera-0" }, { key: "player-manguera-1" }],
       frameRate: 4, // Velocidad baja para que el uso de la manguera se vea más pausado
       repeat: -1, // Bucle durante el uso; se detiene en onItemUseCompleted
     });
@@ -240,11 +237,16 @@ export class Game1 extends Scene {
     // Timer de tiempo restante centrado entre wife e items (MM:SS)
     const timerY = ITEM_UI.startY + ITEM_UI.size / 2;
     this.timerText = this.add
-      .text(w / 2, timerY, formatRemainingTime(this.gameTimer.remainingSeconds), {
-        fontSize: "44px",
-        color: "#000000",
-        fontStyle: "bold",
-      })
+      .text(
+        w / 2,
+        timerY,
+        formatRemainingTime(this.gameTimer.remainingSeconds),
+        {
+          fontSize: "44px",
+          color: "#000000",
+          fontStyle: "bold",
+        },
+      )
       .setOrigin(0.5, 0.5)
       .setDepth(101);
 
@@ -306,7 +308,7 @@ export class Game1 extends Scene {
         this.backgroundSound.stop();
         this.scene.start("MainMenu");
       },
-      this
+      this,
     );
 
     // Hook E2E (Playwright): expone la escena en window.__gameScene para tests
@@ -484,7 +486,9 @@ export class Game1 extends Scene {
   update(_time: number, delta: number): void {
     this.gameTimer.update(delta);
     if (this.timerText && !this.gameTimer.isFinished) {
-      this.timerText.setText(formatRemainingTime(this.gameTimer.remainingSeconds));
+      this.timerText.setText(
+        formatRemainingTime(this.gameTimer.remainingSeconds),
+      );
     }
     this.updateFondoByTime();
 
@@ -644,11 +648,11 @@ export class Game1 extends Scene {
       this.board.worldToNearestCell(playerX, playerY);
     const frontCol = Math.min(
       playerCell.col + 1,
-      this.board.getTotalCols() - 1
+      this.board.getTotalCols() - 1,
     );
     const { x: cellFrontX, y: startY } = this.board.cellToWorld(
       frontCol,
-      playerCell.row
+      playerCell.row,
     );
     // Nunca iniciar detrás del jugador: si la celda queda atrás (p. ej. 1ª vez al llegar), usar mínimo adelante
     const minOffsetAdelante = bounds.cellWidth * 0.5;

@@ -2,7 +2,7 @@ import type Player from "../entities/Player";
 import { EnemyTypes } from "./types";
 
 /** Contribución máxima de sonido por enemigo (1 al spawn, hasta este valor al acercarse). */
-export const ENEMY_MAX_SOUND_CONTRIBUTION = 10;
+export const ENEMY_MAX_SOUND_CONTRIBUTION = 25;
 
 /** Frame rate for the sprite/sprite2 walk animation. */
 const ENEMY_WALK_FRAME_RATE = 4;
