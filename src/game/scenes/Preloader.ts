@@ -51,6 +51,10 @@ export class Preloader extends Scene {
     this.load.image("wife_life_2", "wife/remedios-2.png");
     this.load.image("wife_life_3", "wife/remedios-3.png");
     this.load.image("wife_life_4", "wife/remedios-4.png");
+    // Indicador de volumen (0 = vacío, 7 = lleno), al lado del indicador de vida
+    for (let i = 0; i <= 7; i++) {
+      this.load.image(`volumen_${i}`, `wife/volumen/volumen-${i}.png`);
+    }
     this.load.image("items/escoba", "items/escoba-icon.png");
     this.load.image("items/manguera", "items/mangera-icon.png");
 

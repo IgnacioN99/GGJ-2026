@@ -6,6 +6,7 @@ import entities, {
   soundAdded,
   soundReduced,
   WifeLifeDisplay,
+  VolumeDisplay,
   Escoba,
   Manguera,
   PlayerEventTypes,
@@ -161,11 +162,24 @@ export class Game1 extends Scene {
 
     // Wife: barra de estrés/sonido; si se sobrecarga → Game Over
     this.wife = new Wife(DEFAULT_MAX_SOUND, this);
+    const wifeX = 0;
+    const wifeY = -30;
+    const wifeSize = 200;
+    const gap = 10;
     const wifeLifeDisplay = new WifeLifeDisplay(this, this.wife, {
-      width: 200,
-      height: 200,
+      x: wifeX,
+      y: wifeY,
+      width: wifeSize,
+      height: wifeSize,
     });
     this.add.existing(wifeLifeDisplay);
+    const volumeDisplay = new VolumeDisplay(this, this.wife, {
+      x: wifeX + wifeSize + gap,
+      y: wifeY,
+      width: wifeSize,
+      height: wifeSize,
+    });
+    this.add.existing(volumeDisplay);
 
     this.wife.on(WifeEventTypes.Overwhelmed, () => {
       this.backgroundSound.stop();

@@ -22,6 +22,9 @@ export type { WifeState, WifeSceneAction, WifeEmittedAction } from "./Wife";
 export { WifeLifeDisplay } from "./WifeLifeDisplay";
 export type { WifeLifeDisplayConfig } from "./WifeLifeDisplay";
 
+export { VolumeDisplay, VOLUME_IMAGE_KEYS, getVolumeImageIndex } from "./VolumeDisplay";
+export type { VolumeDisplayConfig } from "./VolumeDisplay";
+
 export { BaseItem, ItemEventTypes, ItemTypes } from "./Item";
 export type {
   ItemConfig,
