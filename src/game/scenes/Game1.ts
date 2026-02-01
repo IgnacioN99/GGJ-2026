@@ -213,11 +213,23 @@ export class Game1 extends Scene {
     this.wife.on(WifeEventTypes.Reset, updatePlayerVolumeAlert);
     updatePlayerVolumeAlert();
 
-    // Timer de partida: al terminar → victoria
+    // Timer de partida: al terminar → eliminar todos los enemigos, esperar animaciones y luego victoria
     this.gameTimer = new GameTimer();
     this.gameTimer.on(GameTimerEventTypes.Finished, () => {
-      this.backgroundSound.stop();
-      this.scene.start("GameOver", { won: true });
+      const allEnemies = this.enemySpawner.getSpawnedEnemies();
+      for (const enemy of allEnemies) {
+        this.events.emit(
+          WifeEventTypes.SoundReduced,
+          soundReduced(enemy.soundContribution),
+        );
+      }
+      this.enemySpawner.removeEnemies(this, allEnemies);
+      // Esperar a que terminen las animaciones de muerte (500 ms cada una, se lanzan a la vez)
+      const WIN_TRANSITION_DELAY_MS = 1000;
+      this.time.delayedCall(WIN_TRANSITION_DELAY_MS, () => {
+        this.backgroundSound.stop();
+        this.scene.start("GameOver", { won: true });
+      });
     });
 
     // Timer de tiempo restante centrado entre wife e items (MM:SS)
@@ -473,6 +485,11 @@ export class Game1 extends Scene {
       this.player.equippedItem?.itemType === ItemTypes.ESCOBA
     ) {
       this.killEnemiesInEscobaSweep();
+    }
+
+    // Durante el uso de la manguera, matar continuamente enemigos en la fila (los que entren en rango)
+    if (this.manguera.isUsing) {
+      this.killEnemiesInMangueraLine();
     }
 
     // Cooldown de items no equipados (el equipado lo actualiza el player)
