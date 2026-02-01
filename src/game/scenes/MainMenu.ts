@@ -13,6 +13,9 @@ export class MainMenu extends Scene
 
     create ()
     {
+        this.sound.stopAll();
+        this.sound.add('menu', { loop: true }).play();
+
         this.background = this.add.image(512, 384, 'background');
 
         this.logo = this.add.image(512, 300, 'logo');
@@ -32,7 +35,7 @@ export class MainMenu extends Scene
         const game1Btn = this.add.text(512, 540, 'Game 1', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
         const game2Btn = this.add.text(512, 600, 'Game 2', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-        game1Btn.on('pointerdown', () => this.scene.start('Game1'));
+        game1Btn.on('pointerdown', () => this.scene.start('Game'));
         game2Btn.on('pointerdown', () => this.scene.start('Game2'));
     }
 }

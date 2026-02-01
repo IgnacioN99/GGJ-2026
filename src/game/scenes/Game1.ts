@@ -16,7 +16,7 @@ import entities, {
 import { Board, type Cell } from "../Board";
 import { GameLevel, getBoardConfigForLevel } from "../Board/type";
 import { ENEMY_MAX_SOUND_CONTRIBUTION } from "../BaseEnemy";
-import { EnemySpawner } from "../enemySpawner";
+import { EnemySpawner } from "../EnemySpawner";
 import { GameTimer, GameTimerEventTypes } from "../GameTimer";
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
@@ -117,19 +117,13 @@ export class Game1 extends Scene {
     // Animaciones del jugador con items: se repiten hasta que termine el uso del item (se detienen en restoreDefaultSprite)
     this.anims.create({
       key: "player-escoba-use",
-      frames: [
-        { key: "player-escoba-0" },
-        { key: "player-escoba-1" },
-      ],
+      frames: [{ key: "player-escoba-0" }, { key: "player-escoba-1" }],
       frameRate: 8,
       repeat: -1, // Bucle durante el uso; se detiene en onItemUseCompleted
     });
     this.anims.create({
       key: "player-manguera-use",
-      frames: [
-        { key: "player-manguera-0" },
-        { key: "player-manguera-1" },
-      ],
+      frames: [{ key: "player-manguera-0" }, { key: "player-manguera-1" }],
       frameRate: 8,
       repeat: -1, // Bucle durante el uso; se detiene en onItemUseCompleted
     });
@@ -165,7 +159,7 @@ export class Game1 extends Scene {
     this.escoba = new Escoba();
     this.manguera = new Manguera();
     this.manguera.on(ItemEventTypes.UseStarted, () =>
-      this.killEnemiesInMangueraLine()
+      this.killEnemiesInMangueraLine(),
     );
     this.createItemUI();
 
@@ -180,7 +174,7 @@ export class Game1 extends Scene {
       this.board.clearHover();
     });
     this.events.on(PlayerEventTypes.GlobalCooldownEnded, () =>
-      this.updateItemUI()
+      this.updateItemUI(),
     );
     this.events.on(PlayerEventTypes.Blocked, () => {
       this.board.clearHover();
@@ -229,7 +223,8 @@ export class Game1 extends Scene {
   private createItemUI(): void {
     const w = this.scale.width;
     const totalItems = 2;
-    const totalWidth = totalItems * ITEM_UI.size + (totalItems - 1) * ITEM_UI.gap;
+    const totalWidth =
+      totalItems * ITEM_UI.size + (totalItems - 1) * ITEM_UI.gap;
     ITEM_UI.startX = w - totalWidth - 20;
 
     // Slot Escoba: rectángulo invisible + icono
@@ -243,7 +238,7 @@ export class Game1 extends Scene {
         ITEM_UI.size,
         ITEM_UI.size,
         0x000000,
-        0 // Transparente
+        0, // Transparente
       )
       .setStrokeStyle(0, 0x000000) // Sin borde
       .setInteractive({ useHandCursor: true })
@@ -273,7 +268,7 @@ export class Game1 extends Scene {
         ITEM_UI.size,
         ITEM_UI.size,
         0x000000,
-        0 // Transparente
+        0, // Transparente
       )
       .setStrokeStyle(0, 0x000000) // Sin borde
       .setInteractive({ useHandCursor: true })
@@ -379,7 +374,8 @@ export class Game1 extends Scene {
 
     // Si no hay enemigos, el jugador puede moverse sin item
     const hasNoEnemies =
-      this.enemySpawner.getSpawnedEnemies().filter((e) => e.sprite?.active).length === 0;
+      this.enemySpawner.getSpawnedEnemies().filter((e) => e.sprite?.active)
+        .length === 0;
     this.player.setAllowMoveWithoutItem(hasNoEnemies);
 
     // Durante el uso de la escoba, matar continuamente todos los enemigos delante del jugador
@@ -459,14 +455,14 @@ export class Game1 extends Scene {
 
       const progress = Math.max(
         0,
-        Math.min(1, (enemy.spawnX - enemy.sprite.x) / range)
+        Math.min(1, (enemy.spawnX - enemy.sprite.x) / range),
       );
       const contribution = Math.max(
         1,
         Math.min(
           ENEMY_MAX_SOUND_CONTRIBUTION,
-          Math.round(1 + progress * (ENEMY_MAX_SOUND_CONTRIBUTION - 1))
-        )
+          Math.round(1 + progress * (ENEMY_MAX_SOUND_CONTRIBUTION - 1)),
+        ),
       );
 
       if (contribution === enemy.soundContribution) continue;
@@ -501,7 +497,7 @@ export class Game1 extends Scene {
     for (const enemy of toKill) {
       this.events.emit(
         WifeEventTypes.SoundReduced,
-        soundReduced(enemy.soundContribution)
+        soundReduced(enemy.soundContribution),
       );
     }
     this.enemySpawner.removeEnemies(toKill);
@@ -524,7 +520,7 @@ export class Game1 extends Scene {
     for (const enemy of toKill) {
       this.events.emit(
         WifeEventTypes.SoundReduced,
-        soundReduced(enemy.soundContribution)
+        soundReduced(enemy.soundContribution),
       );
     }
     this.enemySpawner.removeEnemies(toKill);
@@ -545,7 +541,7 @@ export class Game1 extends Scene {
     for (const enemy of toKill) {
       this.events.emit(
         WifeEventTypes.SoundReduced,
-        soundReduced(enemy.soundContribution)
+        soundReduced(enemy.soundContribution),
       );
     }
     this.enemySpawner.removeEnemies(toKill);

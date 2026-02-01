@@ -36,6 +36,7 @@ export class Game2 extends Scene {
   private fondoIndex = 0;
   /** Si hay una transición de fondo en curso. */
   private fondoTransitioning = false;
+  private backgroundSound: Phaser.Sound.BaseSound;
 
   constructor() {
     super("Game2");
@@ -93,17 +94,33 @@ export class Game2 extends Scene {
     // init game timer
     this.gameTimer = new GameTimer();
     this.gameTimer.on(GameTimerEventTypes.Finished, () => {
+      this.backgroundSound.stop();
       this.scene.start("GameOver", { won: true });
     });
 
     // init enemy spawner
     this.enemySpawner = new EnemySpawner(this.board);
 
+    // init background music (stop any other sounds, play only this)
+    this.sound.stopAll();
+    this.backgroundSound = this.sound.add("background", { loop: true });
+    this.backgroundSound.play();
+
     // EVENTS
+
+    // return to MainMenu on Escape
+    this.input.keyboard?.on(
+      "keydown-ESC",
+      () => {
+        this.backgroundSound.stop();
+        this.scene.start("MainMenu");
+      },
+      this
+    );
 
     // handle game over
     this.wife.on(WifeEventTypes.Overwhelmed, () => {
-      // Evento emitido cuando la Wife está abrumada
+      this.backgroundSound.stop();
       this.scene.start("GameOver", { won: false });
     });
 

@@ -6,7 +6,7 @@ import { TamborEnemy } from "../BaseEnemy/TamborEnemy";
 import { DiabloEnemy } from "../BaseEnemy/DiabloEnemy";
 import type Player from "../entities/Player";
 import { EnemyTypes } from "../BaseEnemy/types";
-import { SECONDS_TO_SPAWN } from "./types";
+import { SECONDS_TO_SPAWN } from "../EnemySpawner/types";
 
 export class EnemySpawner {
   private introEnemies: BaseEnemy[] = [
@@ -174,7 +174,7 @@ export class EnemySpawner {
       const enemyCell = this.board.worldToCell(ex, ey);
       if (enemyCell) {
         const inCell = cells.some(
-          (c) => c.col === enemyCell.col && c.row === enemyCell.row
+          (c) => c.col === enemyCell.col && c.row === enemyCell.row,
         );
         if (inCell) {
           toKillSet.add(enemy);
@@ -184,10 +184,7 @@ export class EnemySpawner {
 
       for (const c of cells) {
         const outOfBounds =
-          c.col < 0 ||
-          c.row < 0 ||
-          c.col >= cols ||
-          c.row >= rows;
+          c.col < 0 || c.row < 0 || c.col >= cols || c.row >= rows;
         if (outOfBounds) {
           const left = bounds.minX + c.col * bounds.cellWidth;
           const right = bounds.minX + (c.col + 1) * bounds.cellWidth;

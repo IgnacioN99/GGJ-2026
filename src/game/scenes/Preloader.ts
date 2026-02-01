@@ -45,6 +45,8 @@ export class Preloader extends Scene {
     this.load.image("wife_life_4", "wife/Dolores_doodle_4.png");
     this.load.image("items/escoba", "items/escoba-icon.png");
     this.load.image("items/manguera", "items/mangera-icon.png");
+    this.load.audio("menu", "sounds/menu.ogg");
+    this.load.audio("background", "sounds/background.ogg");
   }
 
   create() {
