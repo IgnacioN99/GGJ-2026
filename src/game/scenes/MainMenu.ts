@@ -35,7 +35,7 @@ export class MainMenu extends Scene {
       game1Btn.on("pointerdown", () => {
         this.sound.stopAll();
         this.sound.add("sfx_confirm", { loop: false }).play();
-        this.scene.start("Game1");
+        this.scene.start("Intro");
       });
       game2Btn.on("pointerdown", () => {
         this.sound.stopAll();

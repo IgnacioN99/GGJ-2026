@@ -2,11 +2,9 @@ import { Scene, GameObjects } from "phaser";
 
 /** Cuadro image keys (must match Preloader). */
 const CUADRO_KEYS = [
-  "cuadro_0",
-  "cuadro_1",
-  "cuadro_2",
-  "cuadro_3",
-  "cuadro_4",
+  "intro/intro1.png",
+  "intro/intro2.png",
+  "intro/intro3.png",
 ] as const;
 
 /** Time in ms before auto-advancing to the next slide. */
@@ -15,7 +13,8 @@ const SLIDE_DURATION_MS = 4000;
 export class Intro extends Scene {
   private currentSlide: GameObjects.Image | null = null;
   private slideIndex = 0;
-  private autoAdvanceTimer: Phaser.Time.TimerEvent | null = null;
+  private backgroundStarted = false;
+  private introSound: Phaser.Sound.BaseSound | null = null;
 
   constructor() {
     super("Intro");
@@ -23,15 +22,29 @@ export class Intro extends Scene {
 
   create() {
     this.sound.stopAll();
-    this.sound.add("intro", { loop: true }).play();
+    this.introSound = this.sound.add("intro", { loop: true });
+    this.introSound.play();
+
+    const padding = 16;
+    const hint = this.add.text(
+      this.scale.width - padding,
+      this.scale.height - padding,
+      "Presiona espacio para avanzar",
+      {
+        fontSize: "24px",
+        color: "#000000",
+        fontFamily: "Arial",
+        fontStyle: "bold",
+      },
+    );
+    hint.setOrigin(1, 1);
+    hint.setDepth(100);
 
     this.input.keyboard?.on("keydown-SPACE", this.advanceSlide, this);
     this.showSlide(0);
   }
 
   private advanceSlide = () => {
-    this.cancelAutoAdvance();
-
     this.slideIndex++;
     if (this.slideIndex >= CUADRO_KEYS.length) {
       this.goToGame1();
@@ -42,8 +55,6 @@ export class Intro extends Scene {
   };
 
   private showSlide(index: number) {
-    this.cancelAutoAdvance();
-
     if (this.currentSlide) {
       this.currentSlide.destroy();
     }
@@ -56,35 +67,38 @@ export class Intro extends Scene {
     );
     this.currentSlide.setDisplaySize(this.scale.width, this.scale.height);
 
-    this.scheduleNextAutoAdvance();
-  }
-
-  private scheduleNextAutoAdvance() {
-    this.cancelAutoAdvance();
-    this.autoAdvanceTimer = this.time.delayedCall(
-      SLIDE_DURATION_MS,
-      this.advanceSlide,
-      [],
-      this,
-    );
-  }
-
-  private cancelAutoAdvance() {
-    if (this.autoAdvanceTimer) {
-      this.autoAdvanceTimer.destroy();
-      this.autoAdvanceTimer = null;
+    if (index === 1 && !this.backgroundStarted) {
+      this.backgroundStarted = true;
+      if (this.introSound) {
+        this.tweens.add({
+          targets: this.introSound,
+          volume: 0,
+          duration: 3000,
+          ease: "Linear",
+          onComplete: () => {
+            this.introSound?.stop();
+          },
+        });
+      }
+      const bgSound = this.sound.add("background", { loop: true });
+      bgSound.volume = 0;
+      bgSound.play();
+      this.tweens.add({
+        targets: bgSound,
+        volume: 0.5,
+        duration: 3000,
+        ease: "Linear",
+      });
     }
   }
 
   private goToGame1() {
-    this.cancelAutoAdvance();
     this.input.keyboard?.off("keydown-SPACE", this.advanceSlide, this);
     this.sound.stopAll();
     this.scene.start("Game1");
   }
 
   shutdown() {
-    this.cancelAutoAdvance();
     this.input.keyboard?.off("keydown-SPACE", this.advanceSlide, this);
   }
 }

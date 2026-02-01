@@ -277,7 +277,7 @@ export class Game1 extends Scene {
     this.events.on(PlayerEventTypes.GlobalCooldownStarted, () => {
       this.updateItemUI();
       this.board.clearHover();
-      this.breathLoopSound?.play();
+      //this.breathLoopSound?.play();
     });
     this.events.on(PlayerEventTypes.GlobalCooldownEnded, () => {
       this.updateItemUI();
@@ -724,9 +724,9 @@ export class Game1 extends Scene {
     const jetDistance = AGUA_JET_LENGTH_CELLS * bounds.cellWidth;
     const endX = Math.min(startX + jetDistance, bounds.maxX);
 
-    const xPos = this.player.getX() + 110
-    const yPos = this.player.getY() - 30
-    const aguaSprite = this.add.sprite( xPos,yPos, "agua-001");
+    const xPos = this.player.getX() + 110;
+    const yPos = this.player.getY() - 30;
+    const aguaSprite = this.add.sprite(xPos, yPos, "agua-001");
     aguaSprite.setOrigin(0.17, 0.57);
     aguaSprite.setDepth(5);
 
